@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>ASTRONuRi Trading Tracker — Risk Enhanced</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* New Color for Amber Glow */
+  --amber-end:#fcd34d;
+  --gold-a:#f59e0b;
+  --gold-b:#fb923c;
+  --navy:#071426;
+  --muted:#6b7280;
+  --card:#ffffff;
+  --radius:10px;
+  --shadow:0 8px 24px rgba(16,24,40,0.06);
+  --input-border:#d1d5db; /* Light gray border */
+  --table-bg-odd:#f9fafb; /* Very light gray for alternating rows */
+  font-family: 'Poppins', sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:linear-gradient(180deg,#eef2f7,#f7fbff);color:var(--navy)}
+.wrap{max-width:1100px;margin:24px auto;padding:18px}
+.card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:1px solid rgba(11,18,32,0.04)}
+h2{margin:0 0 10px 0;font-weight:700;background:linear-gradient(90deg,var(--gold-a),var(--gold-b));-webkit-background-clip:text;color:transparent}
+.grid-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-three{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase}
+
+/* --- Input Enhancements --- */
+input[type=number], input[type=text] {
+  width:100%; padding:10px; border-radius:8px;
+  border:1px solid var(--input-border); /* Light gray border */
+  font-weight:700; background:transparent;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Subtle shadow */
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input[type=number]:focus, input[type=text]:focus {
+  outline: none;
+  border-color: var(--gold-a);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+
+/* --- Button Enhancements (Primary/Highlighted) --- */
+button{
+  border:none; border-radius:8px; padding:10px 18px; cursor:pointer;
+  font-weight:700; background:transparent; color:var(--navy);
+  border:1px solid rgba(11,18,32,0.06);
+  transition: all 0.2s ease;
+}
+button:hover {
+  background: #f1f1f1;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08); /* Soft hover shadow for secondary buttons */
+}
+/* Primary buttons get the gradient glow and soft shadow */
+button.primary, #addWin, #addLoss {
+  /* Gradient orange-to-amber */
+  background: linear-gradient(90deg, var(--gold-a), var(--amber-end));
+  color: var(--navy);
+  border: none;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); /* Base soft shadow */
+  font-size: 14px; /* Slightly larger for consistency */
+}
+button.primary:hover, #addWin:hover, #addLoss:hover {
+  /* Subtle glow/shadow on hover */
+  background: linear-gradient(90deg, var(--gold-b), var(--amber-end));
+  box-shadow: 0 6px 18px rgba(251, 146, 60, 0.5); /* Enhanced hover shadow */
+  transform: translateY(-1px);
+}
+/* Disabled State */
+button:disabled {
+    background: #e5e7eb !important;
+    color: #9ca3af !important;
+    cursor: not-allowed;
+    box-shadow: none !important;
+    transform: none !important;
+    opacity: 0.7;
+}
+
+.badge{padding:10px 14px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfbfb);border:1px solid rgba(11,18,32,0.04);min-width:180px;text-align:center;font-weight:800}
+/* Risk Alert Badge Styling */
+.badge.risk-alert { background: #fef2f2; border-color: #fca5a5; color: #ef4444; }
+
+
+.alert{display:none;padding:10px;border-radius:8px;margin-top:12px;font-weight:700}
+.alert.err{background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca}
+.alert.info{background:#fff7ed;color:#854d0e;border:1px solid #fde68a}
+
+/* --- Table Enhancements --- */
+table{width:100%;border-collapse:separate;margin-top:12px;font-size:14px;border-spacing: 0;}
+/* Soft borders (using rgba for softness) */
+th,td{padding:12px;text-align:center;border-right:1px solid rgba(11,18,32,0.05);border-bottom:1px solid rgba(11,18,32,0.05);}
+th:last-child, td:last-child { border-right: none; }
+thead th {
+    border-top: 1px solid rgba(11,18,32,0.05);
+    background: #eef2f7;
+    /* Bold header style */
+    font-weight: 700;
+    color: var(--navy);
+    text-transform: uppercase;
+    font-size: 12px;
+}
+/* Alternating light row background */
+#tradeBody tr:nth-child(odd) { background-color: var(--table-bg-odd); }
+/* Rounded corners on the table (only on the header for a clean look) */
+thead tr:first-child th:first-child { border-top-left-radius: var(--radius); }
+thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
+/* Row glow for latest trade - slightly softer */
+.latest{background:#fffbe7;box-shadow: inset 0 0 0 1px #fde68a; transition: all 0.6s}
+
+/* Capital After Trade dynamic glow classes */
+.trade-gain { color: #059669; font-weight: 700; text-shadow: 0 0 2px rgba(5, 150, 105, 0.4); } /* Green for gains */
+.trade-loss { color: #dc2626; font-weight: 700; text-shadow: 0 0 2px rgba(220, 38, 38, 0.4); } /* Red for losses */
+
+
+.small{font-size:12px;color:var(--muted)}
+#debugConsole{font-family:monospace;font-size:12px;color:#7f1d1d;margin-top:10px;display:none}
+
+/* --- 'Use Manual' Checkbox Alignment --- */
+.align-manual { display:flex; align-items:center; gap:12px; } /* Increased gap for better spacing */
+.align-manual label {
+    display:flex; align-items:center; gap:6px; /* Align text and checkbox */
+    font-size:13px;
+    margin: 0; /* Remove default label margin */
+    white-space: nowrap; /* Keep it on one line */
+    cursor: pointer;
+}
+/* Ensure the checkbox itself is not affected by font sizing */
+.align-manual label input[type="checkbox"] {
+    width: auto;
+    box-shadow: none;
+    padding: 0;
+}
+
+
+/* --- Footer Links Enhancement (Stretched Evenly) --- */
+.footer-links {
+    display: flex;
+    justify-content: space-around; /* Stretch evenly across width */
+    align-items: center;
+    padding-top: 15px;
+    border-top: 1px solid rgba(11,18,32,0.04);
+    margin-top: 20px;
+}
+.footer-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 5px 10px;
+    transition: color 0.2s;
+}
+.footer-links a:hover {
+    color: var(--gold-a);
+    text-decoration: underline;
+}
+
+/* modal styles (minor tweaks for consistency) */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); backdrop-filter: blur(4px); z-index:2000; justify-content:center; align-items:center; }
+.modal { background:var(--card); border-radius:12px; padding:20px; width:360px; box-shadow:0 15px 40px rgba(0,0,0,0.3); text-align:center; }
+.modal h3 { margin:0 0 8px; font-size:18px; font-weight:700; background:linear-gradient(90deg,var(--gold-a),var(--gold-b)); -webkit-background-clip:text; color:transparent; }
+.modal p { margin:0 0 14px; color:#223; }
+.modal .btn-row { display:flex; gap:10px; justify-content:center; margin-top:15px; }
+.modal .btn { padding:10px 15px; border-radius:8px; cursor:pointer; border:none; font-weight:700; font-size:14px; transition: all 0.2s; }
+.modal .btn.primary { background:linear-gradient(90deg,var(--gold-a),var(--gold-b)); color:var(--navy); box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3); }
+.modal .btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(251, 146, 60, 0.5); }
+.modal .btn.ghost { background:#e5e7eb; color:var(--navy) }
+.modal .btn.ghost:hover { background: #d1d5db; }
+
+/* subtle animations */
+.fade-in { animation: fadeIn .28s ease both; }
+@keyframes fadeIn { from { opacity:0; transform: translateY(-8px); } to { opacity:1; transform: translateY(0); } }
+
+/* responsive */
+@media (max-width:640px){
+  .grid-two,.grid-three{grid-template-columns:1fr}
+  .align-manual{flex-direction:column;align-items:stretch}
+  .footer-links { flex-direction: column; align-items: stretch; }
+  .footer-links a { text-align: center; padding: 8px 10px; border-bottom: 1px solid rgba(11,18,32,0.02); }
+  .footer-links a:last-child { border-bottom: none; }
+}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h2>ASTRONuRi Trading Tracker</h2>
+
+      <div class="grid-two">
+        <div><label for="capital">CAPITAL</label><input id="capital" type="number" placeholder="1000" value="1000"></div>
+        <div><label for="profit">TARGET PROFIT</label><input id="profit" type="number" placeholder="10" value="10"></div>
+      </div>
+      
+      <div class="grid-two" style="margin-top:12px">
+        <div><label for="maxDailyLossPercent">DAILY LOSS LIMIT (%)</label><input id="maxDailyLossPercent" type="number" placeholder="5" value="5"></div>
+        <div><label for="maxDrawdownValue">MAX DRAWDOWN ($) *</label><input id="maxDrawdownValue" type="number" placeholder="50" value="50"></div>
+      </div>
+      <div class="grid-three" style="margin-top:12px">
+        <div><label for="trades">ESTIMATED TRADES</label><input id="trades" type="number" placeholder="10" value="10"></div>
+        <div><label for="payout">BROKER PAYOUT %</label><input id="payout" type="number" placeholder="75" value="75"></div>
+        <div><label for="winrate">EXPECTED WIN RATE %</label><input id="winrate" type="number" placeholder="55" value="55"></div>
+      </div>
+
+      <div style="margin-top:12px">
+        <label>Optional Manual Next Trade</label>
+        <div class="align-manual" style="margin-top:6px">
+          <input id="startManualTrade" type="number" placeholder="manual next trade (optional)" style="flex:1" />
+          <div class="badge" style="min-width:220px;text-align:left">
+            <div class="small">Suggested</div>
+            <div id="suggestedBox" style="font-size:18px;margin-top:6px">0.00</div>
+          </div>
+          <label for="useManualStart">
+            <input id="useManualStart" type="checkbox" /> Use Manual
+          </label>
+        </div>
+      </div>
+
+      <div class="controls" style="margin-top:15px">
+        <button id="startBtn" class="primary">Start Session</button>
+        <button id="addWin" class="primary" type="button" disabled>Add Win</button>
+        <button id="addLoss" class="primary" type="button" disabled>Add Loss</button>
+        <button id="downloadBtn" type="button">Download CSV</button>
+        <button id="resetBtn" type="button">Reset</button>
+        <div style="flex:1"></div>
+      </div>
+
+      <div id="alertBanner" class="alert" role="status" aria-live="polite"></div>
+
+      <div style="display:flex;gap:12px;align-items:center;margin-top:15px;flex-wrap:wrap">
+        <div class="badge"><div class="small">Session Status</div><div id="summaryText" style="font-size:18px;margin-top:6px">Idle</div></div>
+        <div id="capitalBadge" class="badge"><div class="small">CAPITAL</div><div id="capitalValue" style="font-size:18px;margin-top:6px">0.00</div></div>
+        <div class="badge"><div class="small">Mode</div><div id="modeBadge" style="font-size:18px;margin-top:6px">Auto</div></div>
+        
+        <div id="lossLimitBadge" class="badge"><div class="small">Max Loss Remaining</div><div id="maxLossRemainingValue" style="font-size:18px;margin-top:6px">0.00</div></div>
+        <div id="drawdownBadge" class="badge"><div class="small">Current Max Drawdown</div><div id="maxDrawdownValueBadge" style="font-size:18px;margin-top:6px">0.00</div></div>
+      </div>
+      <div style="margin-top:20px">
+        <div class="small" style="margin-bottom:8px">Trade History</div>
+
+        <div style="overflow-x:auto;max-height:300px;margin-top:8px;border:1px solid rgba(11,18,32,0.05);border-radius:var(--radius);">
+          <table id="tradeTable" style="display:none; margin:0; border:none; ">
+            <thead><tr><th>Trade #</th><th>Used Trade Cost</th><th>Result</th><th>Capital After Trade</th><th>Suggested Trade</th><th>Notes</th></tr></thead>
+            <tbody id="tradeBody"></tbody>
+          </table>
+        </div>
+
+        <div id="debugConsole"></div>
+      </div>
+      
+      <div class="footer-links" id="resourceListWrapper">
+        </div>
+      
+    </div>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal fade-in" id="modalBox">
+      <h3 id="modalTitle">Title</h3>
+      <p id="modalMessage">Message</p>
+      <div class="btn-row" id="modalButtons"></div>
+    </div>
+  </div>
+
+  <audio id="bellAudio">
+    <source src="data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YRAAAAAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA" type="audio/wav">
+  </audio>
+
+<script>
+(function(){
+  // state
+  let initialCapital = 0, capital = 0, targetProfit = 0, estTrades = 0, payout = 0, winRate = 0;
+  let tradeCount = 0, totalProfit = 0, currentTradeCost = 0;
+  let manualOverride = false, manualBase = 0, sessionHalted = true; // sessionHalted starts as true to disable buttons
+  const multiplier = 1.63;
+
+  // NEW RISK STATE
+  let maxDailyLossPercent = 0;
+  let maxDailyLossValue = 0;
+  let maxDrawdownValue = 0;
+  let highestCapitalPeak = 0; 
+  let currentDrawdown = 0;
+
+  // DOM Elements
+  const modalOverlay = document.getElementById('modalOverlay');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalMessage = document.getElementById('modalMessage');
+  const modalButtons = document.getElementById('modalButtons');
+  const bell = document.getElementById('bellAudio');
+  
+  // DOM elements for control buttons
+  const startBtn = document.getElementById('startBtn');
+  const addWinBtn = document.getElementById('addWin');
+  const addLossBtn = document.getElementById('addLoss');
+
+  // DOM elements for risk badges
+  const lossLimitBadge = document.getElementById('lossLimitBadge');
+  const maxLossRemainingValue = document.getElementById('maxLossRemainingValue');
+  const drawdownBadge = document.getElementById('drawdownBadge');
+  const maxDrawdownValueBadge = document.getElementById('maxDrawdownValueBadge');
+
+
+  // --- CONTROL FUNCTIONS ---
+  
+  function setControlsEnabled(enabled) {
+      addWinBtn.disabled = !enabled;
+      addLossBtn.disabled = !enabled;
+      // Start button is disabled when the session is running (enabled)
+      // and enabled when the session is stopped (disabled)
+      startBtn.disabled = enabled;
+  }
+
+  function playBell(){ 
+    try{ bell.currentTime = 0; bell.play().catch(()=>{}); } catch(e){}
+  }
+
+  function showModal({title='', message='', buttons=[]}){
+    return new Promise(resolve => {
+      modalTitle.innerText = title;
+      modalMessage.innerText = message;
+      modalButtons.innerHTML = '';
+      buttons.forEach((btn, idx) => {
+        const b = document.createElement('button');
+        b.innerText = btn.label;
+        b.className = btn.primary ? 'btn primary' : 'btn ghost';
+        b.onclick = () => {
+          modalOverlay.style.display = 'none';
+          resolve(btn.value);
+        };
+        modalButtons.appendChild(b);
+      });
+      modalOverlay.style.display = 'flex';
+      playBell();
+    });
+  }
+
+  // helpers
+  function flashAlert(type, text){
+    const el = document.getElementById('alertBanner');
+    el.className = 'alert ' + (type==='err'?'err':'info');
+    el.innerText = text;
+    el.style.display = 'block';
+    setTimeout(()=>{ el.style.display='none'; }, 3500);
+  }
+
+  function updateSuggestedBox(){
+    const cap = parseFloat(document.getElementById('capital').value) || 0;
+    const prof = parseFloat(document.getElementById('profit').value) || 0;
+    const t = parseFloat(document.getElementById('trades').value) || 1;
+    const p = (parseFloat(document.getElementById('payout').value) || 0)/100;
+    const w = (parseFloat(document.getElementById('winrate').value) || 0)/100;
+    let val = 0;
+    if(cap && prof && t && p && w) {
+      val = prof / (t * p * w);
+      if(!isFinite(val) || val<=0) val = cap * 0.01;
+    } else {
+      val = cap * 0.01;
+    }
+    document.getElementById('suggestedBox').innerText = Number(val||0).toFixed(2);
+    return val;
+  }
+
+  // initialize resource list (only 4 clean links)
+  const RESOURCES = [
+    {title:'Beginner Guide', url:'https://www.investopedia.com/articles/optioninvestor/07/binary-options.asp'},
+    {title:'Candlestick Charts', url:'https://www.investopedia.com/terms/c/candlestick.asp'},
+    {title:'Technical Analysis', url:'https://www.investopedia.com/terms/t/technicalanalysis.asp'},
+    {title:'Risk Management', url:'https://www.babypips.com/learn/forex/risk-management'}
+  ];
+  function showRandomResources(){
+    const list = document.getElementById('resourceListWrapper');
+    list.innerHTML = '';
+    // Use the first 4 resources only for a clean, even-stretched footer
+    RESOURCES.slice(0, 4).forEach(r=>{
+      const a = document.createElement('a');
+      a.href = r.url; a.target='_blank'; a.rel='noopener noreferrer';
+      a.innerText = r.title;
+      list.appendChild(a);
+    });
+  }
+  
+  // NEW: Function to update the risk status badges
+  function updateRiskStatus() {
+      // 1. Update Highest Capital Peak
+      highestCapitalPeak = Math.max(highestCapitalPeak, capital);
+
+      // 2. Calculate Max Drawdown
+      currentDrawdown = highestCapitalPeak - capital;
+      maxDrawdownValueBadge.innerText = currentDrawdown.toFixed(2);
+      
+      // Apply visual risk warning for drawdown
+      if (maxDrawdownValue > 0 && currentDrawdown >= maxDrawdownValue * 0.8) {
+          drawdownBadge.classList.add('risk-alert');
+      } else {
+          drawdownBadge.classList.remove('risk-alert');
+      }
+
+      // 3. Calculate Loss Limit Remaining
+      const lossToDate = initialCapital - capital;
+      const lossRemaining = maxDailyLossValue - lossToDate;
+      
+      maxLossRemainingValue.innerText = lossRemaining.toFixed(2);
+      
+      // Apply visual risk warning for daily loss
+      if (maxDailyLossValue > 0 && lossRemaining <= maxDailyLossValue * 0.2) {
+          lossLimitBadge.classList.add('risk-alert');
+      } else {
+          lossLimitBadge.classList.remove('risk-alert');
+      }
+      
+      // If the session is halted, ensure buttons are disabled
+      if (sessionHalted) {
+          setControlsEnabled(false);
+      }
+  }
+
+
+  // core functions
+  function startSessionImpl(){
+    clearAlert();
+    initialCapital = parseFloat(document.getElementById('capital').value) || 0;
+    if(!initialCapital){ flashErr('Enter valid capital'); return; }
+    capital = initialCapital;
+    
+    // RISK INITIALIZATION
+    maxDailyLossPercent = parseFloat(document.getElementById('maxDailyLossPercent').value) || 0;
+    maxDailyLossValue = initialCapital * (maxDailyLossPercent / 100);
+    maxDrawdownValue = parseFloat(document.getElementById('maxDrawdownValue').value) || 0;
+    highestCapitalPeak = initialCapital;
+    currentDrawdown = 0;
+    
+    targetProfit = parseFloat(document.getElementById('profit').value) || 0;
+    estTrades = parseInt(document.getElementById('trades').value) || 10;
+    payout = (parseFloat(document.getElementById('payout').value) || 0) / 100;
+    winRate = (parseFloat(document.getElementById('winrate').value) || 0) / 100;
+    tradeCount = 0; totalProfit = 0; sessionHalted = false; targetReachedHandled = false; warned75 = false; warnedTradeLimitThisRound = false;
+    manualOverride = document.getElementById('useManualStart').checked;
+    manualBase = parseFloat(document.getElementById('startManualTrade').value) || 0;
+    currentTradeCost = manualOverride && manualBase>0 ? manualBase : updateSuggestedBox();
+    
+    document.getElementById('summaryText').innerText='Running';
+    document.getElementById('capitalValue').innerText = capital.toFixed(2);
+    document.getElementById('modeBadge').innerText = manualOverride ? 'Manual' : 'Auto';
+    document.getElementById('tradeBody').innerHTML=''; document.getElementById('tradeTable').style.display='none';
+    
+    setControlsEnabled(true); // Activate trade buttons
+    updateRiskStatus(); // Initial risk status update
+    showRandomResources(); // Initialize footer links
+    flashInfo('Session started');
+  }
+
+  // flags to avoid repeating the same modal continuously
+  let warned75 = false;
+  let warnedTradeLimitThisRound = false;
+  let targetReachedHandled = false;
+
+  async function addTrade(result){
+    if(sessionHalted) return;
+    
+    // update mode mid-session
+    manualOverride = document.getElementById('useManualStart').checked;
+    const manualVal = parseFloat(document.getElementById('startManualTrade').value) || 0;
+    if(manualOverride && manualVal>0){ manualBase = manualVal; currentTradeCost = manualBase; }
+    else if(!manualOverride){ currentTradeCost = updateSuggestedBox(); }
+
+    // ensure valid cost
+    if(!currentTradeCost || currentTradeCost <= 0) currentTradeCost = Math.max(1, (initialCapital||1000)*0.01);
+    tradeCount++;
+
+    const used = Number(currentTradeCost);
+    let notes = '';
+    let capitalBefore = capital;
+
+    if(result === 'WIN'){
+      const gain = used * payout;
+      capital += gain;
+      totalProfit += gain;
+      // next trade:
+      currentTradeCost = manualOverride ? manualBase : updateSuggestedBox();
+      notes = `Win: +${gain.toFixed(2)}`;
+    } else {
+      capital -= used;
+      totalProfit -= used;
+      // recovery escalation
+      currentTradeCost = used * multiplier;
+      notes = `Loss: -${used.toFixed(2)}`;
+    }
+    
+    // Determine the capital change for glow class
+    const capitalChange = capital - capitalBefore;
+    const capitalGlowClass = capitalChange >= 0 ? 'trade-gain' : 'trade-loss';
+
+    // append row
+    appendRow({
+      trade: tradeCount,
+      used: used.toFixed(2),
+      result,
+      capital: capital.toFixed(2),
+      suggested: Number(currentTradeCost).toFixed(2),
+      notes,
+      capitalGlowClass // Pass the class for the glow
+    });
+
+    document.getElementById('capitalValue').innerText = Number(capital||0).toFixed(2);
+    document.getElementById('summaryText').innerText = `Running. Capital: ${Number(capital||0).toFixed(2)}`;
+
+    // Update risk status after every trade
+    updateRiskStatus();
+
+    // 1) target profit reached -> auto stop
+    if(!targetReachedHandled && totalProfit >= targetProfit && targetProfit > 0){
+      targetReachedHandled = true;
+      sessionHalted = true;
+      setControlsEnabled(false); // Deactivate trade buttons on halt
+      await showModal({
+        title: '🎯 Target Profit Reached',
+        message: `You achieved the target profit of ${targetProfit.toFixed?targetProfit.toFixed(2):targetProfit}. Session will stop. Use the RESET button to clear the data and restart.`,
+        buttons: [{label:'OK', value:'ok', primary:true}]
+      });
+      return;
+    }
+    
+    // --- RISK ENFORCEMENT CHECKS (Do NOT auto-reset) ---
+
+    // 2) Max Daily Loss Limit Hit -> HARD STOP
+    const lossToDate = initialCapital - capital;
+    if(maxDailyLossValue > 0 && lossToDate >= maxDailyLossValue){
+      sessionHalted = true;
+      setControlsEnabled(false); // Deactivate trade buttons on halt
+      await showModal({
+        title: '🛑 DAILY LOSS LIMIT REACHED',
+        message: `Capital loss (${lossToDate.toFixed(2)}) has reached the maximum daily limit of ${maxDailyLossValue.toFixed(2)}. Session STOPPED. Use the RESET button to clear the data and restart.`,
+        buttons: [{label:'Acknowledge', value:'ok', primary:true}] // Changed button label
+      });
+      return;
+    }
+    
+    // 3) Max Drawdown Limit Hit -> HARD STOP
+    if(maxDrawdownValue > 0 && currentDrawdown >= maxDrawdownValue){
+      sessionHalted = true;
+      setControlsEnabled(false); // Deactivate trade buttons on halt
+      await showModal({
+        title: '🛑 MAXIMUM DRAWDOWN HIT',
+        message: `Current Drawdown (${currentDrawdown.toFixed(2)}) has hit the limit of ${maxDrawdownValue.toFixed(2)} from the peak. Session STOPPED. Use the RESET button to clear the data and restart.`,
+        buttons: [{label:'Acknowledge', value:'ok', primary:true}] // Changed button label
+      });
+      return;
+    }
+
+    // 4) hard stop: capital <= 25% of initial -> forced stop (old check, less critical now)
+    if(initialCapital>0 && capital <= initialCapital * 0.25){
+      sessionHalted = true;
+      setControlsEnabled(false); // Deactivate trade buttons on halt
+      await showModal({
+        title: '⚠️ Capital Critical (25% Rule)',
+        message: `Capital dropped to ${capital.toFixed(2)} which is ≤ 25% of initial. Session stopped (reset required).`,
+        buttons: [{label:'OK', value:'ok', primary:true}]
+      });
+      return;
+    }
+
+    // 5) trade limit reached -> ask continue/stop
+    if(estTrades>0 && tradeCount >= estTrades && !warnedTradeLimitThisRound){
+      warnedTradeLimitThisRound = true;
+      const res = await showModal({
+        title: '⚙️ Trade Limit Reached',
+        message: `You have reached your declared number of trades (${estTrades}). Do you want to continue this session?`,
+        buttons: [
+          {label:'Stop', value:'stop', primary:false},
+          {label:'Continue', value:'continue', primary:true}
+        ]
+      });
+      if(res === 'stop'){
+        sessionHalted = true;
+        setControlsEnabled(false); // Deactivate trade buttons on halt
+        return;
+      }
+    }
+
+    // 6) 75% warning (capital <= 75% of initial) -> ask continue (only once until capital recovers)
+    if(initialCapital>0 && capital <= initialCapital * 0.75 && !warned75){
+      warned75 = true; 
+      const res = await showModal({
+        title: '⚠️ Warning',
+        message: `Capital has dropped to ${capital.toFixed(2)} (≤ 75% of initial). Do you want to continue trading?`,
+        buttons: [
+          {label:'Stop', value:'stop', primary:false},
+          {label:'Continue', value:'continue', primary:true}
+        ]
+      });
+      if(res === 'stop'){
+        sessionHalted = true;
+        setControlsEnabled(false); // Deactivate trade buttons on halt
+        return;
+      }
+    }
+
+    // If capital recovered above 75%, clear warned flag so next drop triggers again
+    if(initialCapital>0 && capital > initialCapital * 0.75){
+      warned75 = false;
+    }
+
+    // allow trading to continue after checks
+  }
+
+  function appendRow(row){
+    const tbody = document.getElementById('tradeBody');
+    const tr = document.createElement('tr');
+    // Apply the capitalGlowClass to the Capital After Trade column
+    tr.innerHTML = `<td>${row.trade}</td><td>${row.used}</td><td>${row.result}</td><td class="${row.capitalGlowClass}">${row.capital}</td><td>${row.suggested}</td><td>${row.notes}</td>`;
+    tbody.prepend(tr);
+    tr.classList.add('latest');
+    setTimeout(()=>tr.classList.remove('latest'),2000);
+    document.getElementById('tradeTable').style.display = tbody.rows.length ? 'table' : 'none';
+  }
+
+  function downloadCSV(){
+    const rows = [['Trade #','Used Trade Cost','Result','Capital After Trade','Suggested Trade','Notes']];
+    const tbody = document.getElementById('tradeBody');
+    for(let r=0;r<tbody.rows.length;r++){
+      rows.push(Array.from(tbody.rows[r].cells).map(c=>c.innerText));
+    }
+    const csv = rows.map(r => r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv],{type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download = `astronuri_trades_${new Date().toISOString().replace(/[:\-]/g,'').replace(/\..+/, '')}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  }
+
+  function resetSession(){
+    // This function will now ONLY reset the data and UI state.
+
+    // reset state
+    initialCapital = capital = targetProfit = estTrades = payout = winRate = 0;
+    tradeCount = totalProfit = currentTradeCost = manualBase = 0;
+    manualOverride = false; sessionHalted = true; warned75 = false; warnedTradeLimitThisRound = false; targetReachedHandled = false;
+    
+    // Reset NEW RISK STATE
+    maxDailyLossPercent = maxDailyLossValue = maxDrawdownValue = highestCapitalPeak = currentDrawdown = 0;
+
+    document.getElementById('capital').value='1000'; // Reset inputs to default suggested values
+    document.getElementById('profit').value='10';
+    document.getElementById('trades').value='10';
+    document.getElementById('maxDailyLossPercent').value='5';
+    document.getElementById('maxDrawdownValue').value='50';
+    document.getElementById('payout').value='75';
+    document.getElementById('winrate').value='55';
+
+    document.getElementById('startManualTrade').value=''; document.getElementById('useManualStart').checked=false;
+    document.getElementById('tradeBody').innerHTML=''; document.getElementById('tradeTable').style.display='none';
+    document.getElementById('summaryText').innerText='Idle'; document.getElementById('capitalValue').innerText='0.00';
+    document.getElementById('modeBadge').innerText='Auto';
+    
+    setControlsEnabled(false); // Deactivate trade buttons
+    updateRiskStatus();
+
+    updateSuggestedBox();
+    flashInfo('Session reset. Click "Start Session" to begin a new log.');
+  }
+
+  // small UI helpers
+  function clearAlert(){ const el=document.getElementById('alertBanner'); el.style.display='none'; el.innerText=''; }
+  function flashInfo(msg){ const el=document.getElementById('alertBanner'); el.className='alert info'; el.innerText=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',3000); }
+  function flashErr(msg){ const el=document.getElementById('alertBanner'); el.className='alert err'; el.innerText=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',4000); }
+
+  // wire events
+  document.getElementById('startBtn').addEventListener('click', startSessionImpl);
+  document.getElementById('addWin').addEventListener('click', ()=>{ addTrade('WIN'); });
+  document.getElementById('addLoss').addEventListener('click', ()=>{ addTrade('LOSS'); });
+  document.getElementById('resetBtn').addEventListener('click', resetSession);
+  document.getElementById('downloadBtn').addEventListener('click', downloadCSV);
+
+  // live suggested update when inputs change
+  ['capital','profit','trades','payout','winrate', 'maxDailyLossPercent', 'maxDrawdownValue'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('input', ()=>{ 
+        updateSuggestedBox();
+        // Recalculate Max Daily Loss Value immediately when capital or percent changes
+        if (id === 'capital' || id === 'maxDailyLossPercent') {
+            const cap = parseFloat(document.getElementById('capital').value) || 0;
+            const percent = parseFloat(document.getElementById('maxDailyLossPercent').value) || 0;
+            maxDailyLossValue = cap * (percent / 100);
+            if (!sessionHalted) updateRiskStatus(); // Only update risk badges if session is running
+        }
+    });
+  });
+
+  // initial setup on load
+  updateSuggestedBox();
+  showRandomResources(); // Initialize footer links
+  // We call resetSession to ensure the initial state is clean and buttons are disabled
+  resetSession(); 
+})();
+</script>
+</body>
+</html>
