@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -159,6 +159,17 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
     text-decoration: underline;
 }
 
+/* New CSS for Copyright Footer */
+.copyright-footer {
+    text-align: center;
+    padding: 10px 0;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    border-top: 1px solid rgba(11,18,32,0.04);
+}
+
 /* modal styles (minor tweaks for consistency) */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); backdrop-filter: blur(4px); z-index:2000; justify-content:center; align-items:center; }
 .modal { background:var(--card); border-radius:12px; padding:20px; width:360px; box-shadow:0 15px 40px rgba(0,0,0,0.3); text-align:center; }
@@ -230,7 +241,7 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
 
       <div id="alertBanner" class="alert" role="status" aria-live="polite"></div>
 
-      <div style="display:flex;gap:12px;align-items:center;margin-top:15px;flex-wrap:wrap">
+      <div style="display:flex;gap:12px;align-items:center;margin-top:15px;flex-wrap:wrap;justify-content:flex-start">
         <div class="badge"><div class="small">Session Status</div><div id="summaryText" style="font-size:18px;margin-top:6px">Idle</div></div>
         <div id="capitalBadge" class="badge"><div class="small">CAPITAL</div><div id="capitalValue" style="font-size:18px;margin-top:6px">0.00</div></div>
         <div class="badge"><div class="small">Mode</div><div id="modeBadge" style="font-size:18px;margin-top:6px">Auto</div></div>
@@ -252,7 +263,11 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
       </div>
       
       <div class="footer-links" id="resourceListWrapper">
-        </div>
+      </div>
+
+      <div class="copyright-footer">
+          Copyright 2025 ASTRONuRi Limited
+      </div>
       
     </div>
   </div>
@@ -274,8 +289,9 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
   // state
   let initialCapital = 0, capital = 0, targetProfit = 0, estTrades = 0, payout = 0, winRate = 0;
   let tradeCount = 0, totalProfit = 0, currentTradeCost = 0;
-  let manualOverride = false, manualBase = 0, sessionHalted = true; // sessionHalted starts as true to disable buttons
+  let manualOverride = false, manualBase = 0, sessionHalted = true; 
   const multiplier = 1.63;
+  let baseSuggestedCost = 0; 
 
   // NEW RISK STATE
   let maxDailyLossPercent = 0;
@@ -286,21 +302,15 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
 
   // DOM Elements
   const modalOverlay = document.getElementById('modalOverlay');
-  const modalTitle = document.getElementById('modalTitle');
-  const modalMessage = document.getElementById('modalMessage');
-  const modalButtons = document.getElementById('modalButtons');
   const bell = document.getElementById('bellAudio');
-  
-  // DOM elements for control buttons
   const startBtn = document.getElementById('startBtn');
   const addWinBtn = document.getElementById('addWin');
   const addLossBtn = document.getElementById('addLoss');
-
-  // DOM elements for risk badges
-  const lossLimitBadge = document.getElementById('lossLimitBadge');
-  const maxLossRemainingValue = document.getElementById('maxLossRemainingValue');
-  const drawdownBadge = document.getElementById('drawdownBadge');
-  const maxDrawdownValueBadge = document.getElementById('maxDrawdownValueBadge');
+  const resetBtn = document.getElementById('resetBtn'); 
+  const modalTitle = document.getElementById('modalTitle');
+  const modalMessage = document.getElementById('modalMessage');
+  const modalButtons = document.getElementById('modalButtons');
+  const suggestedBox = document.getElementById('suggestedBox');
 
 
   // --- CONTROL FUNCTIONS ---
@@ -308,9 +318,15 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
   function setControlsEnabled(enabled) {
       addWinBtn.disabled = !enabled;
       addLossBtn.disabled = !enabled;
-      // Start button is disabled when the session is running (enabled)
-      // and enabled when the session is stopped (disabled)
-      startBtn.disabled = enabled;
+      startBtn.disabled = enabled; 
+      resetBtn.disabled = false; 
+  }
+  
+  function disableAllControls() {
+      addWinBtn.disabled = true;
+      addLossBtn.disabled = true;
+      startBtn.disabled = true;
+      resetBtn.disabled = false; 
   }
 
   function playBell(){ 
@@ -337,15 +353,6 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
     });
   }
 
-  // helpers
-  function flashAlert(type, text){
-    const el = document.getElementById('alertBanner');
-    el.className = 'alert ' + (type==='err'?'err':'info');
-    el.innerText = text;
-    el.style.display = 'block';
-    setTimeout(()=>{ el.style.display='none'; }, 3500);
-  }
-
   function updateSuggestedBox(){
     const cap = parseFloat(document.getElementById('capital').value) || 0;
     const prof = parseFloat(document.getElementById('profit').value) || 0;
@@ -359,21 +366,19 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
     } else {
       val = cap * 0.01;
     }
-    document.getElementById('suggestedBox').innerText = Number(val||0).toFixed(2);
+    suggestedBox.innerText = Number(val||0).toFixed(2);
     return val;
   }
 
-  // initialize resource list (only 4 clean links)
-  const RESOURCES = [
-    {title:'Beginner Guide', url:'https://www.investopedia.com/articles/optioninvestor/07/binary-options.asp'},
-    {title:'Candlestick Charts', url:'https://www.investopedia.com/terms/c/candlestick.asp'},
-    {title:'Technical Analysis', url:'https://www.investopedia.com/terms/t/technicalanalysis.asp'},
-    {title:'Risk Management', url:'https://www.babypips.com/learn/forex/risk-management'}
-  ];
   function showRandomResources(){
+    const RESOURCES = [
+        {title:'Beginner Guide', url:'https://www.investopedia.com/articles/optioninvestor/07/binary-options.asp'},
+        {title:'Candlestick Charts', url:'https://www.investopedia.com/terms/c/candlestick.asp'},
+        {title:'Technical Analysis', url:'https://www.investopedia.com/terms/t/technicalanalysis.asp'},
+        {title:'Risk Management', url:'https://www.babypips.com/learn/forex/risk-management'}
+    ];
     const list = document.getElementById('resourceListWrapper');
     list.innerHTML = '';
-    // Use the first 4 resources only for a clean, even-stretched footer
     RESOURCES.slice(0, 4).forEach(r=>{
       const a = document.createElement('a');
       a.href = r.url; a.target='_blank'; a.rel='noopener noreferrer';
@@ -382,36 +387,29 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
     });
   }
   
-  // NEW: Function to update the risk status badges
   function updateRiskStatus() {
-      // 1. Update Highest Capital Peak
       highestCapitalPeak = Math.max(highestCapitalPeak, capital);
 
-      // 2. Calculate Max Drawdown
       currentDrawdown = highestCapitalPeak - capital;
-      maxDrawdownValueBadge.innerText = currentDrawdown.toFixed(2);
+      document.getElementById('maxDrawdownValueBadge').innerText = currentDrawdown.toFixed(2);
       
-      // Apply visual risk warning for drawdown
       if (maxDrawdownValue > 0 && currentDrawdown >= maxDrawdownValue * 0.8) {
-          drawdownBadge.classList.add('risk-alert');
+          document.getElementById('drawdownBadge').classList.add('risk-alert');
       } else {
-          drawdownBadge.classList.remove('risk-alert');
+          document.getElementById('drawdownBadge').classList.remove('risk-alert');
       }
 
-      // 3. Calculate Loss Limit Remaining
       const lossToDate = initialCapital - capital;
       const lossRemaining = maxDailyLossValue - lossToDate;
       
-      maxLossRemainingValue.innerText = lossRemaining.toFixed(2);
+      document.getElementById('maxLossRemainingValue').innerText = lossRemaining.toFixed(2);
       
-      // Apply visual risk warning for daily loss
       if (maxDailyLossValue > 0 && lossRemaining <= maxDailyLossValue * 0.2) {
-          lossLimitBadge.classList.add('risk-alert');
+          document.getElementById('lossLimitBadge').classList.add('risk-alert');
       } else {
-          lossLimitBadge.classList.remove('risk-alert');
+          document.getElementById('lossLimitBadge').classList.remove('risk-alert');
       }
       
-      // If the session is halted, ensure buttons are disabled
       if (sessionHalted) {
           setControlsEnabled(false);
       }
@@ -436,23 +434,30 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
     estTrades = parseInt(document.getElementById('trades').value) || 10;
     payout = (parseFloat(document.getElementById('payout').value) || 0) / 100;
     winRate = (parseFloat(document.getElementById('winrate').value) || 0) / 100;
-    tradeCount = 0; totalProfit = 0; sessionHalted = false; targetReachedHandled = false; warned75 = false; warnedTradeLimitThisRound = false;
+    tradeCount = 0; totalProfit = 0; 
+    
+    // Reset flags
+    sessionHalted = false; targetReachedHandled = false; warned75 = false; warnedTradeLimitThisRound = false;
+    
     manualOverride = document.getElementById('useManualStart').checked;
     manualBase = parseFloat(document.getElementById('startManualTrade').value) || 0;
-    currentTradeCost = manualOverride && manualBase>0 ? manualBase : updateSuggestedBox();
+    
+    // Calculate and store the base suggested cost only on start
+    baseSuggestedCost = updateSuggestedBox(); 
+    currentTradeCost = manualOverride && manualBase>0 ? manualBase : baseSuggestedCost; 
     
     document.getElementById('summaryText').innerText='Running';
     document.getElementById('capitalValue').innerText = capital.toFixed(2);
     document.getElementById('modeBadge').innerText = manualOverride ? 'Manual' : 'Auto';
     document.getElementById('tradeBody').innerHTML=''; document.getElementById('tradeTable').style.display='none';
     
-    setControlsEnabled(true); // Activate trade buttons
-    updateRiskStatus(); // Initial risk status update
-    showRandomResources(); // Initialize footer links
+    setControlsEnabled(true); 
+    updateRiskStatus(); 
+    showRandomResources(); 
     flashInfo('Session started');
+    suggestedBox.innerText = Number(currentTradeCost).toFixed(2); // Initial suggested trade cost in box
   }
 
-  // flags to avoid repeating the same modal continuously
   let warned75 = false;
   let warnedTradeLimitThisRound = false;
   let targetReachedHandled = false;
@@ -460,80 +465,100 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
   async function addTrade(result){
     if(sessionHalted) return;
     
-    // update mode mid-session
-    manualOverride = document.getElementById('useManualStart').checked;
+    // 1. Determine the mode and the trade cost TO BE USED for THIS trade
+    const useManualEl = document.getElementById('useManualStart');
     const manualVal = parseFloat(document.getElementById('startManualTrade').value) || 0;
-    if(manualOverride && manualVal>0){ manualBase = manualVal; currentTradeCost = manualBase; }
-    else if(!manualOverride){ currentTradeCost = updateSuggestedBox(); }
+    manualOverride = useManualEl.checked;
+    document.getElementById('modeBadge').innerText = manualOverride ? 'Manual' : 'Auto';
 
-    // ensure valid cost
+    // If manual is checked AND value is valid, update manualBase and use it for THIS trade.
+    if (manualOverride && manualVal > 0) {
+        manualBase = manualVal; 
+        currentTradeCost = manualBase; 
+    } 
+    
+    // 2. Finalize the cost, handle edge cases
     if(!currentTradeCost || currentTradeCost <= 0) currentTradeCost = Math.max(1, (initialCapital||1000)*0.01);
-    tradeCount++;
-
+    
     const used = Number(currentTradeCost);
+    tradeCount++;
     let notes = '';
     let capitalBefore = capital;
+
+    // 3. Process the trade result and DETERMINE THE NEXT suggested cost
+    let nextSuggestedCost = 0;
 
     if(result === 'WIN'){
       const gain = used * payout;
       capital += gain;
       totalProfit += gain;
-      // next trade:
-      currentTradeCost = manualOverride ? manualBase : updateSuggestedBox();
+      
+      // CRITICAL LOGIC: If manual is OFF (or manually set trade is deselected), the next trade MUST be the base auto cost. 
+      // If manual is ON, the next trade remains the manualBase.
+      nextSuggestedCost = manualOverride ? manualBase : baseSuggestedCost; 
       notes = `Win: +${gain.toFixed(2)}`;
-    } else {
+
+    } else { // LOSS
       capital -= used;
       totalProfit -= used;
-      // recovery escalation
-      currentTradeCost = used * multiplier;
+      
+      // Next trade: Escalation (This happens regardless of manual mode for the NEXT trade)
+      nextSuggestedCost = used * multiplier;
       notes = `Loss: -${used.toFixed(2)}`;
     }
     
-    // Determine the capital change for glow class
+    // 4. Update the global currentTradeCost for the next run
+    currentTradeCost = nextSuggestedCost;
+
+    // 5. Update UI and append row
     const capitalChange = capital - capitalBefore;
     const capitalGlowClass = capitalChange >= 0 ? 'trade-gain' : 'trade-loss';
 
-    // append row
     appendRow({
       trade: tradeCount,
       used: used.toFixed(2),
       result,
       capital: capital.toFixed(2),
-      suggested: Number(currentTradeCost).toFixed(2),
+      suggested: Number(nextSuggestedCost).toFixed(2), // Use the newly calculated cost
       notes,
-      capitalGlowClass // Pass the class for the glow
+      capitalGlowClass 
     });
 
     document.getElementById('capitalValue').innerText = Number(capital||0).toFixed(2);
     document.getElementById('summaryText').innerText = `Running. Capital: ${Number(capital||0).toFixed(2)}`;
+    // Update suggested box on the UI for the NEXT trade
+    suggestedBox.innerText = Number(nextSuggestedCost).toFixed(2);
+
 
     // Update risk status after every trade
     updateRiskStatus();
 
-    // 1) target profit reached -> auto stop
+    // --- Session Checks ---
+
+    // 1) target profit reached -> soft stop
     if(!targetReachedHandled && totalProfit >= targetProfit && targetProfit > 0){
       targetReachedHandled = true;
       sessionHalted = true;
-      setControlsEnabled(false); // Deactivate trade buttons on halt
+      setControlsEnabled(false); 
       await showModal({
         title: '🎯 Target Profit Reached',
-        message: `You achieved the target profit of ${targetProfit.toFixed?targetProfit.toFixed(2):targetProfit}. Session will stop. Use the RESET button to clear the data and restart.`,
+        message: `You achieved the target profit of ${targetProfit.toFixed?targetProfit.toFixed(2):targetProfit}. Session will stop. Use the RESET button to clear the data and restart or START SESSION to continue.`,
         buttons: [{label:'OK', value:'ok', primary:true}]
       });
       return;
     }
     
-    // --- RISK ENFORCEMENT CHECKS (Do NOT auto-reset) ---
+    // --- FATAL Stops (Only Reset Allowed) ---
+    const lossToDate = initialCapital - capital;
 
     // 2) Max Daily Loss Limit Hit -> HARD STOP
-    const lossToDate = initialCapital - capital;
     if(maxDailyLossValue > 0 && lossToDate >= maxDailyLossValue){
       sessionHalted = true;
-      setControlsEnabled(false); // Deactivate trade buttons on halt
+      disableAllControls(); 
       await showModal({
         title: '🛑 DAILY LOSS LIMIT REACHED',
         message: `Capital loss (${lossToDate.toFixed(2)}) has reached the maximum daily limit of ${maxDailyLossValue.toFixed(2)}. Session STOPPED. Use the RESET button to clear the data and restart.`,
-        buttons: [{label:'Acknowledge', value:'ok', primary:true}] // Changed button label
+        buttons: [{label:'Acknowledge', value:'ok', primary:true}] 
       });
       return;
     }
@@ -541,19 +566,19 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
     // 3) Max Drawdown Limit Hit -> HARD STOP
     if(maxDrawdownValue > 0 && currentDrawdown >= maxDrawdownValue){
       sessionHalted = true;
-      setControlsEnabled(false); // Deactivate trade buttons on halt
+      disableAllControls(); 
       await showModal({
         title: '🛑 MAXIMUM DRAWDOWN HIT',
         message: `Current Drawdown (${currentDrawdown.toFixed(2)}) has hit the limit of ${maxDrawdownValue.toFixed(2)} from the peak. Session STOPPED. Use the RESET button to clear the data and restart.`,
-        buttons: [{label:'Acknowledge', value:'ok', primary:true}] // Changed button label
+        buttons: [{label:'Acknowledge', value:'ok', primary:true}] 
       });
       return;
     }
 
-    // 4) hard stop: capital <= 25% of initial -> forced stop (old check, less critical now)
+    // 4) hard stop: capital <= 25% of initial -> HARD STOP
     if(initialCapital>0 && capital <= initialCapital * 0.25){
       sessionHalted = true;
-      setControlsEnabled(false); // Deactivate trade buttons on halt
+      disableAllControls(); 
       await showModal({
         title: '⚠️ Capital Critical (25% Rule)',
         message: `Capital dropped to ${capital.toFixed(2)} which is ≤ 25% of initial. Session stopped (reset required).`,
@@ -562,9 +587,13 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
       return;
     }
 
+    // --- Soft Stops (Start Session Enabled to Continue) ---
+
     // 5) trade limit reached -> ask continue/stop
     if(estTrades>0 && tradeCount >= estTrades && !warnedTradeLimitThisRound){
       warnedTradeLimitThisRound = true;
+      sessionHalted = true;
+      setControlsEnabled(false); 
       const res = await showModal({
         title: '⚙️ Trade Limit Reached',
         message: `You have reached your declared number of trades (${estTrades}). Do you want to continue this session?`,
@@ -575,14 +604,19 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
       });
       if(res === 'stop'){
         sessionHalted = true;
-        setControlsEnabled(false); // Deactivate trade buttons on halt
+        setControlsEnabled(false); 
         return;
+      } else {
+        sessionHalted = false;
+        setControlsEnabled(true); 
       }
     }
 
     // 6) 75% warning (capital <= 75% of initial) -> ask continue (only once until capital recovers)
     if(initialCapital>0 && capital <= initialCapital * 0.75 && !warned75){
       warned75 = true; 
+      sessionHalted = true;
+      setControlsEnabled(false); 
       const res = await showModal({
         title: '⚠️ Warning',
         message: `Capital has dropped to ${capital.toFixed(2)} (≤ 75% of initial). Do you want to continue trading?`,
@@ -593,24 +627,30 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
       });
       if(res === 'stop'){
         sessionHalted = true;
-        setControlsEnabled(false); // Deactivate trade buttons on halt
+        setControlsEnabled(false); 
         return;
+      } else {
+        sessionHalted = false;
+        setControlsEnabled(true); 
       }
     }
 
-    // If capital recovered above 75%, clear warned flag so next drop triggers again
+    // If capital recovered above 75%, clear warned flag
     if(initialCapital>0 && capital > initialCapital * 0.75){
       warned75 = false;
     }
 
-    // allow trading to continue after checks
+    // Done.
   }
 
   function appendRow(row){
     const tbody = document.getElementById('tradeBody');
     const tr = document.createElement('tr');
-    // Apply the capitalGlowClass to the Capital After Trade column
     tr.innerHTML = `<td>${row.trade}</td><td>${row.used}</td><td>${row.result}</td><td class="${row.capitalGlowClass}">${row.capital}</td><td>${row.suggested}</td><td>${row.notes}</td>`;
+    
+    const oldLatest = tbody.querySelector('.latest');
+    if(oldLatest) oldLatest.classList.remove('latest');
+    
     tbody.prepend(tr);
     tr.classList.add('latest');
     setTimeout(()=>tr.classList.remove('latest'),2000);
@@ -630,8 +670,6 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
   }
 
   function resetSession(){
-    // This function will now ONLY reset the data and UI state.
-
     // reset state
     initialCapital = capital = targetProfit = estTrades = payout = winRate = 0;
     tradeCount = totalProfit = currentTradeCost = manualBase = 0;
@@ -639,8 +677,9 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
     
     // Reset NEW RISK STATE
     maxDailyLossPercent = maxDailyLossValue = maxDrawdownValue = highestCapitalPeak = currentDrawdown = 0;
+    baseSuggestedCost = 0; 
 
-    document.getElementById('capital').value='1000'; // Reset inputs to default suggested values
+    document.getElementById('capital').value='1000'; 
     document.getElementById('profit').value='10';
     document.getElementById('trades').value='10';
     document.getElementById('maxDailyLossPercent').value='5';
@@ -653,7 +692,12 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
     document.getElementById('summaryText').innerText='Idle'; document.getElementById('capitalValue').innerText='0.00';
     document.getElementById('modeBadge').innerText='Auto';
     
-    setControlsEnabled(false); // Deactivate trade buttons
+    // Explicitly set controls for Idle state: Start ON, Trade buttons OFF
+    startBtn.disabled = false;
+    addWinBtn.disabled = true;
+    addLossBtn.disabled = true;
+    resetBtn.disabled = false;
+
     updateRiskStatus();
 
     updateSuggestedBox();
@@ -678,20 +722,18 @@ thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
     if(!el) return;
     el.addEventListener('input', ()=>{ 
         updateSuggestedBox();
-        // Recalculate Max Daily Loss Value immediately when capital or percent changes
         if (id === 'capital' || id === 'maxDailyLossPercent') {
-            const cap = parseFloat(document.getElementById('capital').value) || 0;
-            const percent = parseFloat(document.getElementById('maxDailyLossPercent').value) || 0;
-            maxDailyLossValue = cap * (percent / 100);
-            if (!sessionHalted) updateRiskStatus(); // Only update risk badges if session is running
+          const cap = parseFloat(document.getElementById('capital').value) || 0;
+          const percent = parseFloat(document.getElementById('maxDailyLossPercent').value) || 0;
+          maxDailyLossValue = cap * (percent / 100);
+          if (!sessionHalted) updateRiskStatus(); 
         }
     });
   });
 
   // initial setup on load
   updateSuggestedBox();
-  showRandomResources(); // Initialize footer links
-  // We call resetSession to ensure the initial state is clean and buttons are disabled
+  showRandomResources(); 
   resetSession(); 
 })();
 </script>
