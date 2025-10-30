@@ -1,741 +1,2063 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>ASTRONuRi Trading Tracker — Risk Enhanced</title>
+<title>ASTRONuRi Trading Tracker & Analyzer</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+/* --- STYLES --- */
 :root{
-  /* New Color for Amber Glow */
-  --amber-end:#fcd34d;
-  --gold-a:#f59e0b;
-  --gold-b:#fb923c;
-  --navy:#071426;
-  --muted:#6b7280;
-  --card:#ffffff;
-  --radius:10px;
-  --shadow:0 8px 24px rgba(16,24,40,0.06);
-  --input-border:#d1d5db; /* Light gray border */
-  --table-bg-odd:#f9fafb; /* Very light gray for alternating rows */
-  font-family: 'Poppins', sans-serif;
+    --amber-end:#fcd34d;
+    --gold-a:#f59e0b;
+    --gold-b:#fb923c;
+    --navy:#071426;
+    --muted:#6b7280;
+    --card:#ffffff;
+    --radius:10px;
+    --shadow:0 8px 24px rgba(16,24,40,0.06);
+    --input-border:#d1d5db;
+    --table-bg-odd:#f9fafb;
+    --red:#ef4444;
+    --green:#10b981;
+    --blue:#3b82f6;
+    --yellow:#f59e0b;
+    font-family: 'Poppins', sans-serif;
 }
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;background:linear-gradient(180deg,#eef2f7,#f7fbff);color:var(--navy)}
-.wrap{max-width:1100px;margin:24px auto;padding:18px}
-.card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:1px solid rgba(11,18,32,0.04)}
-h2{margin:0 0 10px 0;font-weight:700;background:linear-gradient(90deg,var(--gold-a),var(--gold-b));-webkit-background-clip:text;color:transparent}
-.grid-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.grid-three{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase}
-
-/* --- Input Enhancements --- */
-input[type=number], input[type=text] {
-  width:100%; padding:10px; border-radius:8px;
-  border:1px solid var(--input-border); /* Light gray border */
-  font-weight:700; background:transparent;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Subtle shadow */
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-input[type=number]:focus, input[type=text]:focus {
-  outline: none;
-  border-color: var(--gold-a);
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+/* Aggressive Reset */
+*, *::before, *::after { box-sizing: border-box; }
+html,body{ height:100%; margin:0; background:linear-gradient(180deg,#eef2f7,#f7fbff); color:var(--navy) }
+h2,h3,h4{ margin:0 0 10px 0; font-weight: 600; }
+a { color:var(--blue); text-decoration: none; }
+.container { 
+    max-width: 1200px; 
+    margin: 40px auto; 
+    padding: 0 20px; 
+    display: grid;
+    gap: 30px;
 }
 
-.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
-
-/* --- Button Enhancements (Primary/Highlighted) --- */
-button{
-  border:none; border-radius:8px; padding:10px 18px; cursor:pointer;
-  font-weight:700; background:transparent; color:var(--navy);
-  border:1px solid rgba(11,18,32,0.06);
-  transition: all 0.2s ease;
-}
-button:hover {
-  background: #f1f1f1;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08); /* Soft hover shadow for secondary buttons */
-}
-/* Primary buttons get the gradient glow and soft shadow */
-button.primary, #addWin, #addLoss {
-  /* Gradient orange-to-amber */
-  background: linear-gradient(90deg, var(--gold-a), var(--amber-end));
-  color: var(--navy);
-  border: none;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); /* Base soft shadow */
-  font-size: 14px; /* Slightly larger for consistency */
-}
-button.primary:hover, #addWin:hover, #addLoss:hover {
-  /* Subtle glow/shadow on hover */
-  background: linear-gradient(90deg, var(--gold-b), var(--amber-end));
-  box-shadow: 0 6px 18px rgba(251, 146, 60, 0.5); /* Enhanced hover shadow */
-  transform: translateY(-1px);
-}
-/* Disabled State */
-button:disabled {
-    background: #e5e7eb !important;
-    color: #9ca3af !important;
-    cursor: not-allowed;
-    box-shadow: none !important;
-    transform: none !important;
-    opacity: 0.7;
+/* Card Styling */
+.card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--input-border);
 }
 
-.badge{padding:10px 14px;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfbfb);border:1px solid rgba(11,18,32,0.04);min-width:180px;text-align:center;font-weight:800}
-/* Risk Alert Badge Styling */
-.badge.risk-alert { background: #fef2f2; border-color: #fca5a5; color: #ef4444; }
-
-
-.alert{display:none;padding:10px;border-radius:8px;margin-top:12px;font-weight:700}
-.alert.err{background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca}
-.alert.info{background:#fff7ed;color:#854d0e;border:1px solid #fde68a}
-
-/* --- Table Enhancements --- */
-table{width:100%;border-collapse:separate;margin-top:12px;font-size:14px;border-spacing: 0;}
-/* Soft borders (using rgba for softness) */
-th,td{padding:12px;text-align:center;border-right:1px solid rgba(11,18,32,0.05);border-bottom:1px solid rgba(11,18,32,0.05);}
-th:last-child, td:last-child { border-right: none; }
-thead th {
-    border-top: 1px solid rgba(11,18,32,0.05);
-    background: #eef2f7;
-    /* Bold header style */
-    font-weight: 700;
-    color: var(--navy);
-    text-transform: uppercase;
-    font-size: 12px;
+/* Input Group */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
 }
-/* Alternating light row background */
-#tradeBody tr:nth-child(odd) { background-color: var(--table-bg-odd); }
-/* Rounded corners on the table (only on the header for a clean look) */
-thead tr:first-child th:first-child { border-top-left-radius: var(--radius); }
-thead tr:first-child th:last-child { border-top-right-radius: var(--radius); }
-/* Row glow for latest trade - slightly softer */
-.latest{background:#fffbe7;box-shadow: inset 0 0 0 1px #fde68a; transition: all 0.6s}
-
-/* Capital After Trade dynamic glow classes */
-.trade-gain { color: #059669; font-weight: 700; text-shadow: 0 0 2px rgba(5, 150, 105, 0.4); } /* Green for gains */
-.trade-loss { color: #dc2626; font-weight: 700; text-shadow: 0 0 2px rgba(220, 38, 38, 0.4); } /* Red for losses */
-
-
-.small{font-size:12px;color:var(--muted)}
-#debugConsole{font-family:monospace;font-size:12px;color:#7f1d1d;margin-top:10px;display:none}
-
-/* --- 'Use Manual' Checkbox Alignment --- */
-.align-manual { display:flex; align-items:center; gap:12px; } /* Increased gap for better spacing */
-.align-manual label {
-    display:flex; align-items:center; gap:6px; /* Align text and checkbox */
-    font-size:13px;
-    margin: 0; /* Remove default label margin */
-    white-space: nowrap; /* Keep it on one line */
-    cursor: pointer;
-}
-/* Ensure the checkbox itself is not affected by font sizing */
-.align-manual label input[type="checkbox"] {
-    width: auto;
-    box-shadow: none;
-    padding: 0;
-}
-
-
-/* --- Footer Links Enhancement (Stretched Evenly) --- */
-.footer-links {
+.form-group {
     display: flex;
-    justify-content: space-around; /* Stretch evenly across width */
-    align-items: center;
-    padding-top: 15px;
-    border-top: 1px solid rgba(11,18,32,0.04);
+    flex-direction: column;
+}
+label {
+    font-size: 0.9em;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--navy);
+}
+input[type="text"], input[type="number"], select {
+    padding: 10px;
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    font-size: 1em;
+    background-color: var(--card);
+    transition: border-color 0.2s;
+}
+input[type="text"]:focus, input[type="number"]:focus, select:focus {
+    border-color: var(--blue);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Buttons */
+.btn-group {
+    display: flex;
+    gap: 10px;
     margin-top: 20px;
 }
-.footer-links a {
-    color: var(--muted);
-    text-decoration: none;
-    font-size: 13px;
+.btn {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
     font-weight: 600;
-    padding: 5px 10px;
-    transition: color 0.2s;
+    transition: background-color 0.2s;
+    flex-grow: 1;
 }
-.footer-links a:hover {
-    color: var(--gold-a);
-    text-decoration: underline;
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.primary {
+    background-color: var(--blue);
+    color: var(--card);
+}
+.primary:hover:not(:disabled) {
+    background-color: #2563eb;
+}
+.success {
+    background-color: var(--green);
+    color: var(--card);
+}
+.success:hover:not(:disabled) {
+    background-color: #059669;
+}
+.danger {
+    background-color: var(--red);
+    color: var(--card);
+}
+.danger:hover:not(:disabled) {
+    background-color: #dc2626;
+}
+.secondary {
+    background-color: #f3f4f6;
+    color: var(--navy);
+    border: 1px solid var(--input-border);
+}
+.secondary:hover:not(:disabled) {
+    background-color: #e5e7eb;
 }
 
-/* New CSS for Copyright Footer */
-.copyright-footer {
+/* Suggested Trade Box */
+.suggested-trade-box {
     text-align: center;
-    padding: 10px 0;
-    margin-top: 10px;
-    font-size: 12px;
-    color: var(--muted);
-    font-weight: 500;
-    border-top: 1px solid rgba(11,18,32,0.04);
+    padding: 15px;
+    background: var(--gold-b);
+    color: var(--navy);
+    border-radius: var(--radius);
+    margin-top: 15px;
+}
+.suggested-trade-box h4 {
+    margin-bottom: 5px;
+    font-weight: 700;
+}
+.suggested-trade-box p {
+    font-size: 2.2em;
+    font-weight: 700;
+    margin: 0;
 }
 
-/* modal styles (minor tweaks for consistency) */
-.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); backdrop-filter: blur(4px); z-index:2000; justify-content:center; align-items:center; }
-.modal { background:var(--card); border-radius:12px; padding:20px; width:360px; box-shadow:0 15px 40px rgba(0,0,0,0.3); text-align:center; }
-.modal h3 { margin:0 0 8px; font-size:18px; font-weight:700; background:linear-gradient(90deg,var(--gold-a),var(--gold-b)); -webkit-background-clip:text; color:transparent; }
-.modal p { margin:0 0 14px; color:#223; }
-.modal .btn-row { display:flex; gap:10px; justify-content:center; margin-top:15px; }
-.modal .btn { padding:10px 15px; border-radius:8px; cursor:pointer; border:none; font-weight:700; font-size:14px; transition: all 0.2s; }
-.modal .btn.primary { background:linear-gradient(90deg,var(--gold-a),var(--gold-b)); color:var(--navy); box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3); }
-.modal .btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(251, 146, 60, 0.5); }
-.modal .btn.ghost { background:#e5e7eb; color:var(--navy) }
-.modal .btn.ghost:hover { background: #d1d5db; }
+/* Badges */
+.badge-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+}
+.badge {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--navy);
+    background-color: #e5e7eb;
+}
+.badge.risk-alert {
+    background-color: var(--yellow);
+}
+.badge.session-halt {
+    background-color: var(--red);
+    color: var(--card);
+}
+.badge.day-lock {
+    background-color: var(--navy);
+    color: var(--card);
+}
+.badge.premium {
+    background-color: var(--gold-a);
+    color: var(--navy);
+}
 
-/* subtle animations */
-.fade-in { animation: fadeIn .28s ease both; }
-@keyframes fadeIn { from { opacity:0; transform: translateY(-8px); } to { opacity:1; transform: translateY(0); } }
+/* Alert Banner */
+.alert {
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+    display: none;
+    font-weight: 600;
+}
+.alert.info {
+    background-color: #dbeafe;
+    color: var(--blue);
+    border: 1px solid #93c5fd;
+}
+.alert.err {
+    background-color: #fee2e2;
+    color: var(--red);
+    border: 1px solid #f87171;
+}
+.alert.warning {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #f59e0b;
+}
+.alert.success {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #10b981;
+}
 
-/* responsive */
-@media (max-width:640px){
-  .grid-two,.grid-three{grid-template-columns:1fr}
-  .align-manual{flex-direction:column;align-items:stretch}
-  .footer-links { flex-direction: column; align-items: stretch; }
-  .footer-links a { text-align: center; padding: 8px 10px; border-bottom: 1px solid rgba(11,18,32,0.02); }
-  .footer-links a:last-child { border-bottom: none; }
+/* Trade Table */
+.trade-history-section {
+    grid-column: 1 / -1;
+    overflow-x: auto;
+}
+.trade-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    font-size: 0.9em;
+    min-width: 700px;
+}
+.trade-table thead th {
+    background-color: #f3f4f6;
+    padding: 10px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--muted);
+}
+.trade-table tbody td {
+    padding: 10px;
+    border-bottom: 1px solid var(--input-border);
+}
+.trade-table tbody tr:nth-child(odd) {
+    background-color: var(--table-bg-odd);
+}
+.trade-table tbody tr.latest {
+    font-weight: 700;
+    background-color: #e0f2f1; /* Light teal for latest row */
+}
+.trade-gain { color: var(--green); font-weight: 600; }
+.trade-loss { color: var(--red); font-weight: 600; }
+
+/* Analyzer Section */
+#analysisSection {
+    display: none;
+    margin-top: 30px;
+    border-top: 1px solid var(--input-border);
+    padding-top: 20px;
+}
+.analyzer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+    text-align: center;
+}
+.analyzer-metric {
+    padding: 15px;
+    border-radius: var(--radius);
+    background-color: #f9fafb;
+    border: 1px solid var(--input-border);
+}
+.analyzer-metric .value {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: var(--blue);
+    margin: 5px 0;
+}
+.analyzer-metric .label {
+    font-size: 0.8em;
+    color: var(--muted);
+}
+#netPNLBadge {
+    font-size: 1.8em;
+    font-weight: 700;
+    margin: 5px 0;
+}
+.positive-pnl { color: var(--green); }
+.negative-pnl { color: var(--red); }
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: none; /* Hidden by default */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.modal-content {
+    background-color: var(--card);
+    padding: 30px;
+    border-radius: var(--radius);
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+.modal-content h3 {
+    margin-top: 0;
+    color: var(--blue);
+}
+.modal-content p {
+    font-size: 0.9em;
+    color: var(--muted);
+    margin-bottom: 20px;
+}
+.modal-content .btn-group {
+    margin-top: 20px;
+    justify-content: flex-end;
+}
+.modal-content .btn-group .btn {
+    flex-grow: 0;
+}
+
+/* Manual Trade Section */
+.manual-trade-control {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed var(--input-border);
+}
+.manual-trade-control input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    margin-right: -5px;
+}
+.manual-trade-control label {
+    font-weight: 400;
+    font-size: 0.9em;
+    color: var(--navy);
+}
+.manual-trade-input {
+    flex-grow: 1;
+}
+
+/* Media Queries */
+@media (min-width: 768px) {
+    .container {
+        grid-template-columns: 2fr 1fr;
+    }
+    .form-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .trade-history-section {
+        grid-column: 1 / -1;
+    }
+    .analyzer-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
 }
 </style>
 </head>
 <body>
-  <div class="wrap">
+
+<div class="container">
     <div class="card">
-      <h2>ASTRONuRi Trading Tracker</h2>
-
-      <div class="grid-two">
-        <div><label for="capital">CAPITAL</label><input id="capital" type="number" placeholder="1000" value="1000"></div>
-        <div><label for="profit">TARGET PROFIT</label><input id="profit" type="number" placeholder="10" value="10"></div>
-      </div>
-      
-      <div class="grid-two" style="margin-top:12px">
-        <div><label for="maxDailyLossPercent">DAILY LOSS LIMIT (%)</label><input id="maxDailyLossPercent" type="number" placeholder="5" value="5"></div>
-        <div><label for="maxDrawdownValue">MAX DRAWDOWN ($) *</label><input id="maxDrawdownValue" type="number" placeholder="50" value="50"></div>
-      </div>
-      <div class="grid-three" style="margin-top:12px">
-        <div><label for="trades">ESTIMATED TRADES</label><input id="trades" type="number" placeholder="10" value="10"></div>
-        <div><label for="payout">BROKER PAYOUT %</label><input id="payout" type="number" placeholder="75" value="75"></div>
-        <div><label for="winrate">EXPECTED WIN RATE %</label><input id="winrate" type="number" placeholder="55" value="55"></div>
-      </div>
-
-      <div style="margin-top:12px">
-        <label>Optional Manual Next Trade</label>
-        <div class="align-manual" style="margin-top:6px">
-          <input id="startManualTrade" type="number" placeholder="manual next trade (optional)" style="flex:1" />
-          <div class="badge" style="min-width:220px;text-align:left">
-            <div class="small">Suggested</div>
-            <div id="suggestedBox" style="font-size:18px;margin-top:6px">0.00</div>
-          </div>
-          <label for="useManualStart">
-            <input id="useManualStart" type="checkbox" /> Use Manual
-          </label>
-        </div>
-      </div>
-
-      <div class="controls" style="margin-top:15px">
-        <button id="startBtn" class="primary">Start Session</button>
-        <button id="addWin" class="primary" type="button" disabled>Add Win</button>
-        <button id="addLoss" class="primary" type="button" disabled>Add Loss</button>
-        <button id="downloadBtn" type="button">Download CSV</button>
-        <button id="resetBtn" type="button">Reset</button>
-        <div style="flex:1"></div>
-      </div>
-
-      <div id="alertBanner" class="alert" role="status" aria-live="polite"></div>
-
-      <div style="display:flex;gap:12px;align-items:center;margin-top:15px;flex-wrap:wrap;justify-content:flex-start">
-        <div class="badge"><div class="small">Session Status</div><div id="summaryText" style="font-size:18px;margin-top:6px">Idle</div></div>
-        <div id="capitalBadge" class="badge"><div class="small">CAPITAL</div><div id="capitalValue" style="font-size:18px;margin-top:6px">0.00</div></div>
-        <div class="badge"><div class="small">Mode</div><div id="modeBadge" style="font-size:18px;margin-top:6px">Auto</div></div>
+        <h2>📊 ASTRONuRi Tracker</h2>
+        <div class="alert" id="alertBanner"></div>
         
-        <div id="lossLimitBadge" class="badge"><div class="small">Max Loss Remaining</div><div id="maxLossRemainingValue" style="font-size:18px;margin-top:6px">0.00</div></div>
-        <div id="drawdownBadge" class="badge"><div class="small">Current Max Drawdown</div><div id="maxDrawdownValueBadge" style="font-size:18px;margin-top:6px">0.00</div></div>
-      </div>
-      <div style="margin-top:20px">
-        <div class="small" style="margin-bottom:8px">Trade History</div>
-
-        <div style="overflow-x:auto;max-height:300px;margin-top:8px;border:1px solid rgba(11,18,32,0.05);border-radius:var(--radius);">
-          <table id="tradeTable" style="display:none; margin:0; border:none; ">
-            <thead><tr><th>Trade #</th><th>Used Trade Cost</th><th>Result</th><th>Capital After Trade</th><th>Suggested Trade</th><th>Notes</th></tr></thead>
-            <tbody id="tradeBody"></tbody>
-          </table>
+        <h3>1. Session & Risk Parameters</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="subscriptionTier">Subscription Tier</label>
+                <select id="subscriptionTier">
+                    <option value="Free">Free</option>
+                    <option value="Pro">Pro</option>
+                    <option value="Unlimited">Unlimited</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="capital">Initial Capital ($)</label>
+                <input type="number" id="capital" value="1000" min="100" step="10">
+            </div>
+            <div class="form-group">
+                <label for="profit">Target Profit ($)</label>
+                <input type="number" id="profit" value="10" min="1" step="1">
+            </div>
+            <div class="form-group">
+                <label for="maxDailyLossPercent">Max Daily Loss (%)</label>
+                <input type="number" id="maxDailyLossPercent" value="5" min="1" max="100">
+            </div>
+            <div class="form-group">
+                <label for="maxDrawdownValue">Max Drawdown ($)</label>
+                <input type="number" id="maxDrawdownValue" value="50" min="1" step="1">
+            </div>
+             <div class="form-group">
+                <label for="maxTradesDaily">Max Trades (Session)</label>
+                <input type="text" id="maxTradesDaily" value="20" disabled>
+            </div>
         </div>
 
-        <div id="debugConsole"></div>
-      </div>
-      
-      <div class="footer-links" id="resourceListWrapper">
-      </div>
+        <div class="btn-group">
+            <button class="btn primary" id="startBtn">Start Session</button>
+            <button class="btn secondary" id="resetBtn">Reset All Data</button>
+            <button class="btn secondary" id="resetSessionBtn" style="display: none;">Reset Session Only</button>
+        </div>
+        
+        <h3>2. Trade Details</h3>
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="payout">Payout (%)</label>
+                <input type="number" id="payout" value="75" min="1" max="100">
+            </div>
+            <div class="form-group">
+                <label for="winrate">Win Rate (%)</label>
+                <input type="number" id="winrate" value="55" min="1" max="100">
+            </div>
+            <div class="form-group">
+                <label for="strategyTag">Strategy Tag</label>
+                <select id="strategyTag">
+                    <option value="Trend-Following">Trend Following</option>
+                    <option value="Reversal">Reversal</option>
+                    <option value="Breakout">Breakout</option>
+                    <option value="Scalping">Scalping</option>
+                    <option value="News-Trading">News Trading</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="marketPairSelect">Market Pair</label>
+                <select id="marketPairSelect">
+                    <option value="EUR/USD">EUR/USD</option>
+                    <option value="BTC/USD">BTC/USD</option>
+                    <option value="NASDAQ">NASDAQ</option>
+                    <option value="Custom">Custom...</option>
+                </select>
+                <input type="text" id="marketPairCustom" placeholder="Enter custom pair (e.g., AUD/JPY)" style="display:none; margin-top: 5px;">
+            </div>
+            <div class="form-group">
+                <label for="emotion">Emotion</label>
+                <select id="emotion">
+                    <option value="Neutral">Neutral</option>
+                    <option value="Confident">Confident</option>
+                    <option value="Over-Trading">Over-Trading</option>
+                    <option value="Revenge-Trading">Revenge Trading</option>
+                    <option value="Fear">Fear</option>
+                </select>
+            </div>
+        </div>
 
-      <div class="copyright-footer">
-          Copyright 2025 ASTRONuRi Limited
-      </div>
-      
+        <div class="manual-trade-control">
+            <div class="form-group manual-trade-input">
+                 <label for="startManualTrade">Optional Manual Next Trade ($)</label>
+                 <input type="number" id="startManualTrade" value="" placeholder="e.g., 5.00" min="1" step="0.01">
+            </div>
+            <div class="form-group">
+                 <label for="useManualStart">Use Manual?</label>
+                 <input type="checkbox" id="useManualStart">
+            </div>
+        </div>
+        
+        <div class="suggested-trade-box">
+            <h4>Suggested Next Trade Cost:</h4>
+            <p id="suggestedBox">0.00</p>
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn success" id="addWin" disabled>Record WIN</button>
+            <button class="btn danger" id="addLoss" disabled>Record LOSS</button>
+        </div>
     </div>
-  </div>
 
-  <div id="modalOverlay" class="modal-overlay" role="dialog" aria-modal="true">
-    <div class="modal fade-in" id="modalBox">
-      <h3 id="modalTitle">Title</h3>
-      <p id="modalMessage">Message</p>
-      <div class="btn-row" id="modalButtons"></div>
+    <div class="card">
+        <h3>🚀 Session Status <span id="sessionTierDisplay" style="font-size: 0.8em; color: var(--blue); font-weight: 400;">(FREE)</span></h3>
+        <p id="summaryText">Idle</p>
+        
+        <div class="badge-group">
+            <span class="badge" id="sessionStatusBadge">Idle</span>
+            <span class="badge" id="capitalValue">0.00</span>
+            <span class="badge" id="sessionCountValue">0 / 3</span>
+            <span class="badge" id="tradesTodayBadge">0 / 20</span>
+            <!-- NEW: Target Trade Status Badge -->
+            <span class="badge" id="targetTradeStatusBadge" style="background-color: var(--yellow);">Target: 0/0</span>
+            <!-- NEW: License Status Badge -->
+            <span class="badge premium" id="licenseStatusBadge" style="display: none;">Licensed</span>
+        </div>
+        
+        <h3>⚠️ Risk Monitoring</h3>
+        <div class="badge-group">
+            <span class="badge" id="lossLimitBadge">Loss Left: $<span id="maxLossRemainingValue">0.00</span></span>
+            <span class="badge" id="drawdownBadge">Drawdown: $<span id="maxDrawdownValueBadge">0.00</span></span>
+        </div>
+
+        <div class="btn-group" style="flex-direction: column;">
+            <button class="btn primary" id="showAnalyzerBtn">Analyze History 📊</button>
+            <button class="btn secondary" id="downloadBtn">Download Analysis</button>
+            <!-- NEW: Logout License Button -->
+            <button class="btn danger" id="logoutLicenseBtn" style="display: none;">Logout License</button>
+        </div>
+        
+        <div id="haltSummarySection" style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed var(--input-border); display: none;">
+            <h4 style="color: var(--red); margin-bottom: 5px;">🛑 Session Halt Reason</h4>
+            <p id="haltReasonText" style="font-size: 0.9em; font-weight: 600; color: var(--navy); margin: 0;"></p>
+        </div>
     </div>
-  </div>
+    
+    <div class="card trade-history-section" id="tradeHistoryCard">
+        <h3>📜 Trade History</h3>
+        <table class="trade-table" id="tradeTable" style="display:none;">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Cost</th>
+                    <th>Result (P&L)</th>
+                    <th>Capital After</th>
+                    <th>Next Suggested</th>
+                    <th>Strategy</th>
+                    <th>Market</th>
+                    <th>Emotion</th>
+                </tr>
+            </thead>
+            <tbody id="tradeBody">
+                </tbody>
+        </table>
 
-  <audio id="bellAudio">
-    <source src="data:audio/wav;base64,UklGRjQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YRAAAAAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA" type="audio/wav">
-  </audio>
+        <div id="analysisSection">
+            <h3>📈 Trade Analyzer</h3>
+            <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="form-group">
+                    <label for="filterStrategy">Filter Strategy</label>
+                    <select id="filterStrategy">
+                        <option value="all">All Strategies</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="filterMarket">Filter Market</label>
+                    <select id="filterMarket">
+                        <option value="all">All Markets</option>
+                    </select>
+                </div>
+            </div>
+            
+            <p id="analysisFilterText" style="font-size: 0.9em; margin-top: 10px; color: var(--muted);">Showing analysis for all historical trades.</p>
+
+            <div class="analyzer-grid">
+                <div class="analyzer-metric">
+                    <span class="value" id="analyzerTotalTrades">0</span>
+                    <div class="label">Total Trades</div>
+                </div>
+                <div class="analyzer-metric">
+                    <span class="value" id="analyzerNetPNL">0.00</span>
+                    <div class="label">Net P&L ($)</div>
+                </div>
+                <div class="analyzer-metric">
+                    <span class="value" id="analyzerWinRate">0.00%</span>
+                    <div class="label">Win Rate</div>
+                </div>
+                <div class="analyzer-metric" style="grid-column: span 2;">
+                    <span class="value" id="analyzerBestStrategy">N/A</span>
+                    <div class="label">Best Strategy</div>
+                </div>
+                 <div class="analyzer-metric" style="grid-column: span 2;">
+                    <span class="value" id="analyzerLossEmotion">N/A</span>
+                    <div class="label">Most Loss Emotion</div>
+                </div>
+                <div class="analyzer-metric" style="grid-column: 1 / -1;">
+                    <span class="value" id="analyzerLargestTrade">N/A</span>
+                    <div class="label">Largest P&L Trade</div>
+                </div>
+            </div>
+        </div>
+        </div>
+</div>
+
+<div id="licenseModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Activate Premium Tier</h3>
+        <p id="modalTierInfo">To activate a premium tier, please enter your license code.</p>
+        <div class="form-group">
+            <label for="licenseCodeInput">License Code</label>
+            <input type="text" id="licenseCodeInput" placeholder="Enter your license code here">
+        </div>
+        <div class="btn-group">
+            <button class="btn secondary" id="cancelLicenseBtn">Cancel</button>
+            <button class="btn primary" id="activateLicenseBtn">Activate</button>
+        </div>
+    </div>
+</div>
+
+<audio id="bellAudio" preload="auto"></audio>
+
+<!-- Load external license vault -->
+<script src="license_vault.js"></script>
 
 <script>
-(function(){
-  // state
-  let initialCapital = 0, capital = 0, targetProfit = 0, estTrades = 0, payout = 0, winRate = 0;
-  let tradeCount = 0, totalProfit = 0, currentTradeCost = 0;
-  let manualOverride = false, manualBase = 0, sessionHalted = true; 
-  const multiplier = 1.63;
-  let baseSuggestedCost = 0; 
-
-  // NEW RISK STATE
-  let maxDailyLossPercent = 0;
-  let maxDailyLossValue = 0;
-  let maxDrawdownValue = 0;
-  let highestCapitalPeak = 0; 
-  let currentDrawdown = 0;
-
-  // DOM Elements
-  const modalOverlay = document.getElementById('modalOverlay');
-  const bell = document.getElementById('bellAudio');
-  const startBtn = document.getElementById('startBtn');
-  const addWinBtn = document.getElementById('addWin');
-  const addLossBtn = document.getElementById('addLoss');
-  const resetBtn = document.getElementById('resetBtn'); 
-  const modalTitle = document.getElementById('modalTitle');
-  const modalMessage = document.getElementById('modalMessage');
-  const modalButtons = document.getElementById('modalButtons');
-  const suggestedBox = document.getElementById('suggestedBox');
-
-
-  // --- CONTROL FUNCTIONS ---
-  
-  function setControlsEnabled(enabled) {
-      addWinBtn.disabled = !enabled;
-      addLossBtn.disabled = !enabled;
-      startBtn.disabled = enabled; 
-      resetBtn.disabled = false; 
-  }
-  
-  function disableAllControls() {
-      addWinBtn.disabled = true;
-      addLossBtn.disabled = true;
-      startBtn.disabled = true;
-      resetBtn.disabled = false; 
-  }
-
-  function playBell(){ 
-    try{ bell.currentTime = 0; bell.play().catch(()=>{}); } catch(e){}
-  }
-
-  function showModal({title='', message='', buttons=[]}){
-    return new Promise(resolve => {
-      modalTitle.innerText = title;
-      modalMessage.innerText = message;
-      modalButtons.innerHTML = '';
-      buttons.forEach((btn, idx) => {
-        const b = document.createElement('button');
-        b.innerText = btn.label;
-        b.className = btn.primary ? 'btn primary' : 'btn ghost';
-        b.onclick = () => {
-          modalOverlay.style.display = 'none';
-          resolve(btn.value);
-        };
-        modalButtons.appendChild(b);
-      });
-      modalOverlay.style.display = 'flex';
-      playBell();
-    });
-  }
-
-  function updateSuggestedBox(){
-    const cap = parseFloat(document.getElementById('capital').value) || 0;
-    const prof = parseFloat(document.getElementById('profit').value) || 0;
-    const t = parseFloat(document.getElementById('trades').value) || 1;
-    const p = (parseFloat(document.getElementById('payout').value) || 0)/100;
-    const w = (parseFloat(document.getElementById('winrate').value) || 0)/100;
-    let val = 0;
-    if(cap && prof && t && p && w) {
-      val = prof / (t * p * w);
-      if(!isFinite(val) || val<=0) val = cap * 0.01;
-    } else {
-      val = cap * 0.01;
-    }
-    suggestedBox.innerText = Number(val||0).toFixed(2);
-    return val;
-  }
-
-  function showRandomResources(){
-    const RESOURCES = [
-        {title:'Beginner Guide', url:'https://www.investopedia.com/articles/optioninvestor/07/binary-options.asp'},
-        {title:'Candlestick Charts', url:'https://www.investopedia.com/terms/c/candlestick.asp'},
-        {title:'Technical Analysis', url:'https://www.investopedia.com/terms/t/technicalanalysis.asp'},
-        {title:'Risk Management', url:'https://www.babypips.com/learn/forex/risk-management'}
-    ];
-    const list = document.getElementById('resourceListWrapper');
-    list.innerHTML = '';
-    RESOURCES.slice(0, 4).forEach(r=>{
-      const a = document.createElement('a');
-      a.href = r.url; a.target='_blank'; a.rel='noopener noreferrer';
-      a.innerText = r.title;
-      list.appendChild(a);
-    });
-  }
-  
-  function updateRiskStatus() {
-      highestCapitalPeak = Math.max(highestCapitalPeak, capital);
-
-      currentDrawdown = highestCapitalPeak - capital;
-      document.getElementById('maxDrawdownValueBadge').innerText = currentDrawdown.toFixed(2);
-      
-      if (maxDrawdownValue > 0 && currentDrawdown >= maxDrawdownValue * 0.8) {
-          document.getElementById('drawdownBadge').classList.add('risk-alert');
-      } else {
-          document.getElementById('drawdownBadge').classList.remove('risk-alert');
-      }
-
-      const lossToDate = initialCapital - capital;
-      const lossRemaining = maxDailyLossValue - lossToDate;
-      
-      document.getElementById('maxLossRemainingValue').innerText = lossRemaining.toFixed(2);
-      
-      if (maxDailyLossValue > 0 && lossRemaining <= maxDailyLossValue * 0.2) {
-          document.getElementById('lossLimitBadge').classList.add('risk-alert');
-      } else {
-          document.getElementById('lossLimitBadge').classList.remove('risk-alert');
-      }
-      
-      if (sessionHalted) {
-          setControlsEnabled(false);
-      }
-  }
-
-
-  // core functions
-  function startSessionImpl(){
-    clearAlert();
-    initialCapital = parseFloat(document.getElementById('capital').value) || 0;
-    if(!initialCapital){ flashErr('Enter valid capital'); return; }
-    capital = initialCapital;
+    // --- STATE VARIABLES ---
+    let initialCapital = 0, capital = 0, targetProfit = 0, payout = 0, winRate = 0;
+    let tradeCount = 0, sessionTradeCount = 0, totalProfit = 0, currentTradeCost = 0;
+    let manualOverride = false, manualBase = 0, sessionHalted = true; 
+    const multiplier = 1.63;
+    let baseSuggestedCost = 0; 
+    let maxDailyLossPercent = 0, maxDailyLossValue = 0, maxDrawdownValue = 0;
+    let highestCapitalPeak = 0, currentDrawdown = 0;
     
-    // RISK INITIALIZATION
-    maxDailyLossPercent = parseFloat(document.getElementById('maxDailyLossPercent').value) || 0;
-    maxDailyLossValue = initialCapital * (maxDailyLossPercent / 100);
-    maxDrawdownValue = parseFloat(document.getElementById('maxDrawdownValue').value) || 0;
-    highestCapitalPeak = initialCapital;
-    currentDrawdown = 0;
+    let currentSessionCount = 0, dailySessionLimit = 3;
+    let sessionDurationMinutes = 30; // 30 minutes for Free
+    let sessionTradeLimit = 20;      // 20 trades for Free
     
-    targetProfit = parseFloat(document.getElementById('profit').value) || 0;
-    estTrades = parseInt(document.getElementById('trades').value) || 10;
-    payout = (parseFloat(document.getElementById('payout').value) || 0) / 100;
-    winRate = (parseFloat(document.getElementById('winrate').value) || 0) / 100;
-    tradeCount = 0; totalProfit = 0; 
+    let lastHaltTime = 0, nextSessionStartTime = 0, currentSessionStartTime = 0;
+    let lastTradeDate = new Date().toISOString().split('T')[0];
     
-    // Reset flags
-    sessionHalted = false; targetReachedHandled = false; warned75 = false; warnedTradeLimitThisRound = false;
+    let tradeHistory = [];
     
-    manualOverride = document.getElementById('useManualStart').checked;
-    manualBase = parseFloat(document.getElementById('startManualTrade').value) || 0;
+    let haltReason = '';
+    let currentTier = 'Free';
+    let licenseCode = null;
     
-    // Calculate and store the base suggested cost only on start
-    baseSuggestedCost = updateSuggestedBox(); 
-    currentTradeCost = manualOverride && manualBase>0 ? manualBase : baseSuggestedCost; 
-    
-    document.getElementById('summaryText').innerText='Running';
-    document.getElementById('capitalValue').innerText = capital.toFixed(2);
-    document.getElementById('modeBadge').innerText = manualOverride ? 'Manual' : 'Auto';
-    document.getElementById('tradeBody').innerHTML=''; document.getElementById('tradeTable').style.display='none';
-    
-    setControlsEnabled(true); 
-    updateRiskStatus(); 
-    showRandomResources(); 
-    flashInfo('Session started');
-    suggestedBox.innerText = Number(currentTradeCost).toFixed(2); // Initial suggested trade cost in box
-  }
+    let sessionTimerIntervalId = null;
+    let sessionLockIntervalId = null;
 
-  let warned75 = false;
-  let warnedTradeLimitThisRound = false;
-  let targetReachedHandled = false;
+    let consecutiveLosses = 0;
+    let lastTradeResult = null;
 
-  async function addTrade(result){
-    if(sessionHalted) return;
+    // Track if warnings have been shown to avoid spam
+    let profitTargetWarningShown = false;
+    let dailyLossWarningShown = false;
+    let drawdownWarningShown = false;
+
+    // --- TIER SESSION COUNTERS ---
+    let tierSessionCounts = {
+        'Free': 0,
+        'Pro': 0,
+        'Unlimited': 0
+    };
+
+    // --- DOM Elements ---
+    const startBtn = document.getElementById('startBtn');
+    const addWinBtn = document.getElementById('addWin');
+    const addLossBtn = document.getElementById('addLoss');
+    const resetBtn = document.getElementById('resetBtn'); 
+    const resetSessionBtn = document.getElementById('resetSessionBtn');
+    const suggestedBox = document.getElementById('suggestedBox');
+    const analysisSection = document.getElementById('analysisSection');
+    const showAnalyzerBtn = document.getElementById('showAnalyzerBtn'); 
+    const downloadBtn = document.getElementById('downloadBtn');
+    const marketPairSelect = document.getElementById('marketPairSelect');
+    const marketPairCustom = document.getElementById('marketPairCustom');
+    const tradeTable = document.getElementById('tradeTable');
+    const strategyTagSelect = document.getElementById('strategyTag');
+    const emotionSelect = document.getElementById('emotion');
+    const summaryText = document.getElementById('summaryText');
+    const subscriptionTierSelect = document.getElementById('subscriptionTier');
+    const maxTradesDailyInput = document.getElementById('maxTradesDaily');
     
-    // 1. Determine the mode and the trade cost TO BE USED for THIS trade
-    const useManualEl = document.getElementById('useManualStart');
-    const manualVal = parseFloat(document.getElementById('startManualTrade').value) || 0;
-    manualOverride = useManualEl.checked;
-    document.getElementById('modeBadge').innerText = manualOverride ? 'Manual' : 'Auto';
-
-    // If manual is checked AND value is valid, update manualBase and use it for THIS trade.
-    if (manualOverride && manualVal > 0) {
-        manualBase = manualVal; 
-        currentTradeCost = manualBase; 
-    } 
+    const sessionTierDisplay = document.getElementById('sessionTierDisplay'); 
+    const netPNLBadge = document.getElementById('analyzerNetPNL'); 
+    const filterStrategySelect = document.getElementById('filterStrategy');
+    const filterMarketSelect = document.getElementById('filterMarket');
     
-    // 2. Finalize the cost, handle edge cases
-    if(!currentTradeCost || currentTradeCost <= 0) currentTradeCost = Math.max(1, (initialCapital||1000)*0.01);
+    const startManualTradeInput = document.getElementById('startManualTrade');
+    const useManualStartCheckbox = document.getElementById('useManualStart');
     
-    const used = Number(currentTradeCost);
-    tradeCount++;
-    let notes = '';
-    let capitalBefore = capital;
+    const haltSummarySection = document.getElementById('haltSummarySection');
+    const haltReasonText = document.getElementById('haltReasonText');
 
-    // 3. Process the trade result and DETERMINE THE NEXT suggested cost
-    let nextSuggestedCost = 0;
+    const licenseStatusBadge = document.getElementById('licenseStatusBadge');
+    const logoutLicenseBtn = document.getElementById('logoutLicenseBtn');
+    const targetTradeStatusBadge = document.getElementById('targetTradeStatusBadge');
 
-    if(result === 'WIN'){
-      const gain = used * payout;
-      capital += gain;
-      totalProfit += gain;
-      
-      // CRITICAL LOGIC: If manual is OFF (or manually set trade is deselected), the next trade MUST be the base auto cost. 
-      // If manual is ON, the next trade remains the manualBase.
-      nextSuggestedCost = manualOverride ? manualBase : baseSuggestedCost; 
-      notes = `Win: +${gain.toFixed(2)}`;
+    const licenseModal = document.getElementById('licenseModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalTierInfo = document.getElementById('modalTierInfo');
+    const licenseCodeInput = document.getElementById('licenseCodeInput');
+    const activateLicenseBtn = document.getElementById('activateLicenseBtn');
+    const cancelLicenseBtn = document.getElementById('cancelLicenseBtn');
 
-    } else { // LOSS
-      capital -= used;
-      totalProfit -= used;
-      
-      // Next trade: Escalation (This happens regardless of manual mode for the NEXT trade)
-      nextSuggestedCost = used * multiplier;
-      notes = `Loss: -${used.toFixed(2)}`;
+    let targetTierForActivation = '';
+
+    // --- HELPER FUNCTIONS ---
+    function flashInfo(msg){ 
+        const el = document.getElementById('alertBanner'); 
+        el.className = 'alert info'; 
+        el.innerText = msg; 
+        el.style.display = 'block'; 
+        setTimeout(() => el.style.display = 'none', 4000); 
     }
     
-    // 4. Update the global currentTradeCost for the next run
-    currentTradeCost = nextSuggestedCost;
+    function flashErr(msg){ 
+        const el = document.getElementById('alertBanner'); 
+        el.className = 'alert err'; 
+        el.innerText = msg; 
+        el.style.display = 'block'; 
+        setTimeout(() => el.style.display = 'none', 6000); 
+    }
 
-    // 5. Update UI and append row
-    const capitalChange = capital - capitalBefore;
-    const capitalGlowClass = capitalChange >= 0 ? 'trade-gain' : 'trade-loss';
+    function flashWarning(msg) {
+        const el = document.getElementById('alertBanner'); 
+        el.className = 'alert warning'; 
+        el.innerText = msg; 
+        el.style.display = 'block'; 
+        setTimeout(() => el.style.display = 'none', 5000); 
+    }
 
-    appendRow({
-      trade: tradeCount,
-      used: used.toFixed(2),
-      result,
-      capital: capital.toFixed(2),
-      suggested: Number(nextSuggestedCost).toFixed(2), // Use the newly calculated cost
-      notes,
-      capitalGlowClass 
-    });
-
-    document.getElementById('capitalValue').innerText = Number(capital||0).toFixed(2);
-    document.getElementById('summaryText').innerText = `Running. Capital: ${Number(capital||0).toFixed(2)}`;
-    // Update suggested box on the UI for the NEXT trade
-    suggestedBox.innerText = Number(nextSuggestedCost).toFixed(2);
-
-
-    // Update risk status after every trade
-    updateRiskStatus();
-
-    // --- Session Checks ---
-
-    // 1) target profit reached -> soft stop
-    if(!targetReachedHandled && totalProfit >= targetProfit && targetProfit > 0){
-      targetReachedHandled = true;
-      sessionHalted = true;
-      setControlsEnabled(false); 
-      await showModal({
-        title: '🎯 Target Profit Reached',
-        message: `You achieved the target profit of ${targetProfit.toFixed?targetProfit.toFixed(2):targetProfit}. Session will stop. Use the RESET button to clear the data and restart or START SESSION to continue.`,
-        buttons: [{label:'OK', value:'ok', primary:true}]
-      });
-      return;
+    function flashSuccess(msg) {
+        const el = document.getElementById('alertBanner'); 
+        el.className = 'alert success'; 
+        el.innerText = msg; 
+        el.style.display = 'block'; 
+        setTimeout(() => el.style.display = 'none', 5000); 
     }
     
-    // --- FATAL Stops (Only Reset Allowed) ---
-    const lossToDate = initialCapital - capital;
-
-    // 2) Max Daily Loss Limit Hit -> HARD STOP
-    if(maxDailyLossValue > 0 && lossToDate >= maxDailyLossValue){
-      sessionHalted = true;
-      disableAllControls(); 
-      await showModal({
-        title: '🛑 DAILY LOSS LIMIT REACHED',
-        message: `Capital loss (${lossToDate.toFixed(2)}) has reached the maximum daily limit of ${maxDailyLossValue.toFixed(2)}. Session STOPPED. Use the RESET button to clear the data and restart.`,
-        buttons: [{label:'Acknowledge', value:'ok', primary:true}] 
-      });
-      return;
+    function setControlsEnabled(enabled) {
+        addWinBtn.disabled = !enabled;
+        addLossBtn.disabled = !enabled;
+        resetBtn.disabled = false; 
     }
     
-    // 3) Max Drawdown Limit Hit -> HARD STOP
-    if(maxDrawdownValue > 0 && currentDrawdown >= maxDrawdownValue){
-      sessionHalted = true;
-      disableAllControls(); 
-      await showModal({
-        title: '🛑 MAXIMUM DRAWDOWN HIT',
-        message: `Current Drawdown (${currentDrawdown.toFixed(2)}) has hit the limit of ${maxDrawdownValue.toFixed(2)} from the peak. Session STOPPED. Use the RESET button to clear the data and restart.`,
-        buttons: [{label:'Acknowledge', value:'ok', primary:true}] 
-      });
-      return;
-    }
-
-    // 4) hard stop: capital <= 25% of initial -> HARD STOP
-    if(initialCapital>0 && capital <= initialCapital * 0.25){
-      sessionHalted = true;
-      disableAllControls(); 
-      await showModal({
-        title: '⚠️ Capital Critical (25% Rule)',
-        message: `Capital dropped to ${capital.toFixed(2)} which is ≤ 25% of initial. Session stopped (reset required).`,
-        buttons: [{label:'OK', value:'ok', primary:true}]
-      });
-      return;
-    }
-
-    // --- Soft Stops (Start Session Enabled to Continue) ---
-
-    // 5) trade limit reached -> ask continue/stop
-    if(estTrades>0 && tradeCount >= estTrades && !warnedTradeLimitThisRound){
-      warnedTradeLimitThisRound = true;
-      sessionHalted = true;
-      setControlsEnabled(false); 
-      const res = await showModal({
-        title: '⚙️ Trade Limit Reached',
-        message: `You have reached your declared number of trades (${estTrades}). Do you want to continue this session?`,
-        buttons: [
-          {label:'Stop', value:'stop', primary:false},
-          {label:'Continue', value:'continue', primary:true}
-        ]
-      });
-      if(res === 'stop'){
-        sessionHalted = true;
-        setControlsEnabled(false); 
-        return;
-      } else {
-        sessionHalted = false;
-        setControlsEnabled(true); 
-      }
-    }
-
-    // 6) 75% warning (capital <= 75% of initial) -> ask continue (only once until capital recovers)
-    if(initialCapital>0 && capital <= initialCapital * 0.75 && !warned75){
-      warned75 = true; 
-      sessionHalted = true;
-      setControlsEnabled(false); 
-      const res = await showModal({
-        title: '⚠️ Warning',
-        message: `Capital has dropped to ${capital.toFixed(2)} (≤ 75% of initial). Do you want to continue trading?`,
-        buttons: [
-          {label:'Stop', value:'stop', primary:false},
-          {label:'Continue', value:'continue', primary:true}
-        ]
-      });
-      if(res === 'stop'){
-        sessionHalted = true;
-        setControlsEnabled(false); 
-        return;
-      } else {
-        sessionHalted = false;
-        setControlsEnabled(true); 
-      }
-    }
-
-    // If capital recovered above 75%, clear warned flag
-    if(initialCapital>0 && capital > initialCapital * 0.75){
-      warned75 = false;
-    }
-
-    // Done.
-  }
-
-  function appendRow(row){
-    const tbody = document.getElementById('tradeBody');
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${row.trade}</td><td>${row.used}</td><td>${row.result}</td><td class="${row.capitalGlowClass}">${row.capital}</td><td>${row.suggested}</td><td>${row.notes}</td>`;
-    
-    const oldLatest = tbody.querySelector('.latest');
-    if(oldLatest) oldLatest.classList.remove('latest');
-    
-    tbody.prepend(tr);
-    tr.classList.add('latest');
-    setTimeout(()=>tr.classList.remove('latest'),2000);
-    document.getElementById('tradeTable').style.display = tbody.rows.length ? 'table' : 'none';
-  }
-
-  function downloadCSV(){
-    const rows = [['Trade #','Used Trade Cost','Result','Capital After Trade','Suggested Trade','Notes']];
-    const tbody = document.getElementById('tradeBody');
-    for(let r=0;r<tbody.rows.length;r++){
-      rows.push(Array.from(tbody.rows[r].cells).map(c=>c.innerText));
-    }
-    const csv = rows.map(r => r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-    const blob = new Blob([csv],{type:'text/csv'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href=url; a.download = `astronuri_trades_${new Date().toISOString().replace(/[:\-]/g,'').replace(/\..+/, '')}.csv`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-  }
-
-  function resetSession(){
-    // reset state
-    initialCapital = capital = targetProfit = estTrades = payout = winRate = 0;
-    tradeCount = totalProfit = currentTradeCost = manualBase = 0;
-    manualOverride = false; sessionHalted = true; warned75 = false; warnedTradeLimitThisRound = false; targetReachedHandled = false;
-    
-    // Reset NEW RISK STATE
-    maxDailyLossPercent = maxDailyLossValue = maxDrawdownValue = highestCapitalPeak = currentDrawdown = 0;
-    baseSuggestedCost = 0; 
-
-    document.getElementById('capital').value='1000'; 
-    document.getElementById('profit').value='10';
-    document.getElementById('trades').value='10';
-    document.getElementById('maxDailyLossPercent').value='5';
-    document.getElementById('maxDrawdownValue').value='50';
-    document.getElementById('payout').value='75';
-    document.getElementById('winrate').value='55';
-
-    document.getElementById('startManualTrade').value=''; document.getElementById('useManualStart').checked=false;
-    document.getElementById('tradeBody').innerHTML=''; document.getElementById('tradeTable').style.display='none';
-    document.getElementById('summaryText').innerText='Idle'; document.getElementById('capitalValue').innerText='0.00';
-    document.getElementById('modeBadge').innerText='Auto';
-    
-    // Explicitly set controls for Idle state: Start ON, Trade buttons OFF
-    startBtn.disabled = false;
-    addWinBtn.disabled = true;
-    addLossBtn.disabled = true;
-    resetBtn.disabled = false;
-
-    updateRiskStatus();
-
-    updateSuggestedBox();
-    flashInfo('Session reset. Click "Start Session" to begin a new log.');
-  }
-
-  // small UI helpers
-  function clearAlert(){ const el=document.getElementById('alertBanner'); el.style.display='none'; el.innerText=''; }
-  function flashInfo(msg){ const el=document.getElementById('alertBanner'); el.className='alert info'; el.innerText=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',3000); }
-  function flashErr(msg){ const el=document.getElementById('alertBanner'); el.className='alert err'; el.innerText=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',4000); }
-
-  // wire events
-  document.getElementById('startBtn').addEventListener('click', startSessionImpl);
-  document.getElementById('addWin').addEventListener('click', ()=>{ addTrade('WIN'); });
-  document.getElementById('addLoss').addEventListener('click', ()=>{ addTrade('LOSS'); });
-  document.getElementById('resetBtn').addEventListener('click', resetSession);
-  document.getElementById('downloadBtn').addEventListener('click', downloadCSV);
-
-  // live suggested update when inputs change
-  ['capital','profit','trades','payout','winrate', 'maxDailyLossPercent', 'maxDrawdownValue'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(!el) return;
-    el.addEventListener('input', ()=>{ 
-        updateSuggestedBox();
-        if (id === 'capital' || id === 'maxDailyLossPercent') {
-          const cap = parseFloat(document.getElementById('capital').value) || 0;
-          const percent = parseFloat(document.getElementById('maxDailyLossPercent').value) || 0;
-          maxDailyLossValue = cap * (percent / 100);
-          if (!sessionHalted) updateRiskStatus(); 
+    function updateSuggestedBox(){
+        const cap = parseFloat(document.getElementById('capital').value) || 0;
+        const prof = parseFloat(document.getElementById('profit').value) || 0;
+        const t = 10; 
+        const p = (parseFloat(document.getElementById('payout').value) || 0)/100;
+        const w = (parseFloat(document.getElementById('winrate').value) || 0)/100;
+        let val = 0;
+        if(cap && prof && t && p && w && p*w > 0) {
+            val = prof / (t * p * w);
+        } else {
+            val = cap * 0.01;
         }
-    });
-  });
+        val = Math.max(1, val);
+        
+        if (!manualOverride) {
+            suggestedBox.innerText = Number(val||0).toFixed(2);
+        } else {
+            suggestedBox.innerText = manualBase.toFixed(2);
+        }
 
-  // initial setup on load
-  updateSuggestedBox();
-  showRandomResources(); 
-  resetSession(); 
-})();
+        return val;
+    }
+
+    function getCurrentMarketPair(returnCustomValue = false) {
+        if (marketPairSelect.value === 'Custom') {
+            return returnCustomValue ? marketPairCustom.value.trim() || 'N/A' : marketPairSelect.value;
+        } else {
+            return marketPairSelect.value;
+        }
+    }
+
+    function toggleMarketPairInput() {
+        const isCustom = marketPairSelect.value === 'Custom';
+        marketPairCustom.style.display = isCustom ? 'block' : 'none';
+        marketPairCustom.disabled = !isCustom; 
+    }
+    
+    // --- LICENSE & TIER LOGIC ---
+    
+    function checkLocalLicense() {
+        const storedTier = localStorage.getItem('licenseTier');
+        const storedCode = localStorage.getItem('licenseCode');
+        
+        if (storedTier && storedCode) {
+            currentTier = storedTier;
+            licenseCode = storedCode;
+            subscriptionTierSelect.value = currentTier;
+            subscriptionTierSelect.disabled = true;
+            updateLicenseUI();
+            flashInfo(`License loaded: ${currentTier} Tier activated with code ****${storedCode.slice(-4)}`);
+        } else {
+            subscriptionTierSelect.disabled = false;
+            if (currentTier !== 'Free') currentTier = subscriptionTierSelect.value;
+            updateLicenseUI();
+        }
+    }
+    
+    function applyLicense(tier, code) {
+        // Save current tier's session count before switching
+        tierSessionCounts[currentTier] = currentSessionCount;
+        
+        currentTier = tier;
+        licenseCode = code;
+        subscriptionTierSelect.value = tier;
+        subscriptionTierSelect.disabled = true; 
+        localStorage.setItem('licenseTier', tier);
+        localStorage.setItem('licenseCode', code);
+        
+        // Load the new tier's session count
+        currentSessionCount = tierSessionCounts[tier] || 0;
+        
+        updateLicenseUI();
+        resetSessionState();
+        updateTierSettings();
+        
+        flashInfo(`${tier} Tier activated! Session count restored.`);
+    }
+    
+    function removeLicense() {
+        // Save current tier's session count before switching back to Free
+        tierSessionCounts[currentTier] = currentSessionCount;
+        
+        currentTier = 'Free';
+        licenseCode = null;
+        localStorage.removeItem('licenseTier');
+        localStorage.removeItem('licenseCode');
+        subscriptionTierSelect.value = 'Free';
+        subscriptionTierSelect.disabled = false; 
+        
+        // Load Free tier's session count
+        currentSessionCount = tierSessionCounts['Free'] || 0;
+        
+        updateLicenseUI();
+        resetSessionState();
+        updateTierSettings();
+        
+        flashInfo("License logged out successfully. Switched to Free tier.");
+    }
+    
+    function resetSessionState() {
+        sessionTradeCount = 0;
+        totalProfit = 0;
+        currentTradeCost = 0;
+        highestCapitalPeak = initialCapital;
+        currentDrawdown = 0;
+        consecutiveLosses = 0;
+        lastTradeResult = null;
+        sessionHalted = true;
+        currentSessionStartTime = 0;
+        nextSessionStartTime = 0;
+        lastHaltTime = 0;
+        
+        // Reset warning flags
+        profitTargetWarningShown = false;
+        dailyLossWarningShown = false;
+        drawdownWarningShown = false;
+        
+        if (sessionTimerIntervalId) {
+            clearInterval(sessionTimerIntervalId);
+            sessionTimerIntervalId = null;
+        }
+        if (sessionLockIntervalId) {
+            clearInterval(sessionLockIntervalId);
+            sessionLockIntervalId = null;
+        }
+        
+        setControlsEnabled(false);
+        startBtn.disabled = false;
+        resetSessionBtn.style.display = 'none';
+        
+        // **FIX: Show halt summary if there's a halt reason**
+        if (haltReason) {
+            haltSummarySection.style.display = 'block';
+            haltReasonText.innerText = haltReason;
+        } else {
+            haltSummarySection.style.display = 'none';
+        }
+        
+        baseSuggestedCost = updateSuggestedBox();
+        calculateNextTradeCost(null);
+        
+        updateSessionStatus();
+        updateRiskStatus();
+        saveState();
+    }
+    
+    function updateLicenseUI() {
+        if (currentTier !== 'Free' && licenseCode) {
+            licenseStatusBadge.style.display = 'inline-block';
+            licenseStatusBadge.innerText = `${currentTier} Licensed`;
+            logoutLicenseBtn.style.display = 'block';
+        } else {
+            licenseStatusBadge.style.display = 'none';
+            logoutLicenseBtn.style.display = 'none';
+        }
+    }
+    
+    function logoutLicense() {
+        if (!confirm("Are you sure you want to logout your license? This will reset your tier to Free and you'll need to re-enter your license code next time.")) {
+            return;
+        }
+        
+        // **FIX: Clear halt reason on logout**
+        haltReason = '';
+        haltSummarySection.style.display = 'none';
+        
+        removeLicense();
+    }
+    
+    function openLicenseModal(tier) {
+        if (tier === 'Free' || subscriptionTierSelect.disabled) return;
+        
+        targetTierForActivation = tier;
+        modalTitle.innerText = `Activate ${tier} Tier`;
+        modalTierInfo.innerHTML = `To activate the <strong>${tier}</strong> tier, please enter your license code.`;
+        licenseModal.style.display = 'flex';
+        licenseCodeInput.value = '';
+        licenseCodeInput.focus();
+    }
+
+    function validateLicense() {
+        const code = licenseCodeInput.value.toUpperCase().trim();
+        
+        if (typeof licenseVault === 'undefined' || Object.keys(licenseVault).length === 0) {
+            flashErr("License validation disabled: Code vault is empty or not initialized.");
+            licenseModal.style.display = 'none';
+            return;
+        }
+
+        const unlockedTier = licenseVault[code];
+
+        if (!unlockedTier) {
+            flashErr('Invalid license code or code has expired.');
+            return;
+        }
+
+        if (unlockedTier === targetTierForActivation) {
+            applyLicense(unlockedTier, code);
+            
+            if (unlockedTier === 'Pro' || unlockedTier === 'Unlimited') {
+                nextSessionStartTime = 0;
+                // **FIX: Clear halt reason on tier change**
+                haltReason = '';
+                haltSummarySection.style.display = 'none';
+                if (sessionLockIntervalId) {
+                    clearInterval(sessionLockIntervalId);
+                    sessionLockIntervalId = null;
+                }
+                startBtn.disabled = false;
+            }
+
+            licenseModal.style.display = 'none';
+            saveState();
+        } else {
+            flashErr(`This license code unlocks the ${unlockedTier} Tier, not the ${targetTierForActivation} Tier.`);
+        }
+    }
+    
+    function updateTierSettings() {
+        const tier = subscriptionTierSelect.disabled ? currentTier : subscriptionTierSelect.value;
+        let trades = 0, duration = 0, sessionMax = 3;
+
+        if (tier === 'Free') {
+            trades = 20;
+            duration = 30;
+        } else if (tier === 'Pro') {
+            trades = 50;
+            duration = 90;
+        } else if (tier === 'Unlimited') {
+            trades = 99999;
+            duration = 99999;
+            sessionMax = 1;
+        }
+
+        sessionTradeLimit = trades;
+        sessionDurationMinutes = duration;
+        dailySessionLimit = sessionMax;
+
+        maxTradesDailyInput.value = (trades > 1000) ? 'Unlimited' : trades;
+        maxTradesDailyInput.disabled = true;
+
+        sessionTierDisplay.innerText = `(${tier.toUpperCase()})`;
+        document.getElementById('sessionCountValue').innerText = `${currentSessionCount} / ${(tier === 'Unlimited' ? '∞' : dailySessionLimit)}`;
+
+        toggleAnalyzerAccess();
+        toggleDownloadAccess(); 
+        updateRiskStatus(); 
+        saveState();
+        updateLicenseUI();
+    }
+    
+    function toggleAnalyzerAccess() {
+        const isPremium = currentTier === 'Pro' || currentTier === 'Unlimited';
+        if (isPremium) {
+            showAnalyzerBtn.classList.add('primary');
+            showAnalyzerBtn.innerText = 'Analyze History 📊';
+            showAnalyzerBtn.onclick = toggleAnalysisSection;
+        } else {
+            analysisSection.style.display = 'none';
+            showAnalyzerBtn.classList.remove('primary');
+            showAnalyzerBtn.innerText = 'Analyze History 📊';
+            showAnalyzerBtn.onclick = showComingSoon;
+        }
+    }
+    
+    function showComingSoon() {
+        flashInfo(`The Trade Analyzer is a feature reserved for **Pro** and **Unlimited** tiers. Please upgrade to unlock.`);
+    }
+
+    function showDownloadRestricted() {
+        flashInfo(`The Download Analysis feature is reserved for **Pro** and **Unlimited** tiers. Please upgrade to unlock.`);
+    }
+
+    function toggleDownloadAccess() {
+        const isPremium = currentTier === 'Pro' || currentTier === 'Unlimited';
+        downloadBtn.innerText = "Download Analysis";
+
+        if (isPremium) {
+            downloadBtn.disabled = false;
+            downloadBtn.classList.add('primary');
+            downloadBtn.onclick = downloadCSV;
+        } else {
+            downloadBtn.disabled = true;
+            downloadBtn.classList.remove('primary');
+            downloadBtn.onclick = showDownloadRestricted;
+        }
+    }
+
+    // --- PERSISTENCE ---
+    function saveState() {
+        const state = {
+            initialCapital,
+            capital,
+            targetProfit,
+            payout,
+            winRate,
+            tradeCount,
+            sessionTradeCount,
+            totalProfit,
+            currentTradeCost,
+            manualOverride,
+            manualBase,
+            sessionHalted,
+            baseSuggestedCost,
+            maxDailyLossPercent,
+            maxDailyLossValue,
+            maxDrawdownValue,
+            highestCapitalPeak,
+            currentDrawdown,
+            currentSessionCount,
+            dailySessionLimit,
+            sessionDurationMinutes,
+            sessionTradeLimit,
+            lastHaltTime,
+            nextSessionStartTime,
+            currentSessionStartTime,
+            lastTradeDate,
+            tradeHistory,
+            currentTier,
+            licenseCode,
+            haltReason,
+            consecutiveLosses,
+            lastTradeResult,
+            profitTargetWarningShown,
+            dailyLossWarningShown,
+            drawdownWarningShown,
+            tierSessionCounts  // NEW: Save tier session counts
+        };
+        localStorage.setItem('astronuriState', JSON.stringify(state));
+    }
+
+    function loadState() {
+        const saved = localStorage.getItem('astronuriState');
+        if (!saved) return false;
+        
+        try {
+            const state = JSON.parse(saved);
+            
+            initialCapital = state.initialCapital || 0;
+            capital = state.capital || 0;
+            targetProfit = state.targetProfit || 0;
+            payout = state.payout || 0;
+            winRate = state.winRate || 0;
+            tradeCount = state.tradeCount || 0;
+            sessionTradeCount = state.sessionTradeCount || 0;
+            totalProfit = state.totalProfit || 0;
+            currentTradeCost = state.currentTradeCost || 0;
+            manualOverride = state.manualOverride || false;
+            manualBase = state.manualBase || 0;
+            sessionHalted = state.sessionHalted !== undefined ? state.sessionHalted : true;
+            baseSuggestedCost = state.baseSuggestedCost || 0;
+            maxDailyLossPercent = state.maxDailyLossPercent || 0;
+            maxDailyLossValue = state.maxDailyLossValue || 0;
+            maxDrawdownValue = state.maxDrawdownValue || 0;
+            highestCapitalPeak = state.highestCapitalPeak || 0;
+            currentDrawdown = state.currentDrawdown || 0;
+            currentSessionCount = state.currentSessionCount || 0;
+            dailySessionLimit = state.dailySessionLimit || 3;
+            sessionDurationMinutes = state.sessionDurationMinutes || 30;
+            sessionTradeLimit = state.sessionTradeLimit || 20;
+            lastHaltTime = state.lastHaltTime || 0;
+            nextSessionStartTime = state.nextSessionStartTime || 0;
+            currentSessionStartTime = state.currentSessionStartTime || 0;
+            lastTradeDate = state.lastTradeDate || new Date().toISOString().split('T')[0];
+            tradeHistory = state.tradeHistory || [];
+            currentTier = state.currentTier || 'Free';
+            licenseCode = state.licenseCode || null;
+            haltReason = state.haltReason || '';
+            consecutiveLosses = state.consecutiveLosses || 0;
+            lastTradeResult = state.lastTradeResult || null;
+            
+            // Load tier session counts
+            tierSessionCounts = state.tierSessionCounts || {
+                'Free': 0,
+                'Pro': 0,
+                'Unlimited': 0
+            };
+            
+            // Load warning flags with defaults
+            profitTargetWarningShown = state.profitTargetWarningShown || false;
+            dailyLossWarningShown = state.dailyLossWarningShown || false;
+            drawdownWarningShown = state.drawdownWarningShown || false;
+            
+            if (licenseCode) {
+                subscriptionTierSelect.value = currentTier;
+                subscriptionTierSelect.disabled = true;
+            }
+            
+            updateTierSettings();
+            updateUIFromState();
+            checkSessionLock();
+            return true;
+        } catch (e) {
+            console.error('Error loading state:', e);
+            return false;
+        }
+    }
+
+    function updateUIFromState() {
+        document.getElementById('capital').value = initialCapital;
+        document.getElementById('profit').value = targetProfit;
+        document.getElementById('payout').value = payout;
+        document.getElementById('winrate').value = winRate;
+        document.getElementById('maxDailyLossPercent').value = maxDailyLossPercent;
+        document.getElementById('maxDrawdownValue').value = maxDrawdownValue;
+        
+        updateSuggestedBox();
+        
+        useManualStartCheckbox.checked = manualOverride;
+        startManualTradeInput.value = manualBase || '';
+        
+        updateTradeHistoryTable();
+        updateSessionStatus();
+        updateRiskStatus();
+        
+        // **FIX: Show halt summary if there's a halt reason**
+        if (haltReason) {
+            haltSummarySection.style.display = 'block';
+            haltReasonText.innerText = haltReason;
+        } else {
+            haltSummarySection.style.display = 'none';
+        }
+        
+        if (sessionHalted) {
+            setControlsEnabled(false);
+            startBtn.disabled = (currentSessionCount >= dailySessionLimit && currentTier !== 'Unlimited') || 
+                               (Date.now() < nextSessionStartTime && currentTier !== 'Unlimited');
+        } else {
+            setControlsEnabled(true);
+            startBtn.disabled = true;
+        }
+        
+        resetSessionBtn.style.display = sessionHalted ? 'none' : 'block';
+        updateLicenseUI();
+    }
+
+    // --- RECOVERY LOGIC ---
+    function calculateNextTradeCost(result) {
+        if (baseSuggestedCost === 0) {
+             baseSuggestedCost = updateSuggestedBox();
+        }
+
+        if(manualOverride && useManualStartCheckbox.checked) {
+            if (result === 'Win') {
+                currentTradeCost = manualBase;
+                consecutiveLosses = 0;
+            } else if (result === 'Loss') {
+                if (consecutiveLosses === 0) {
+                    currentTradeCost = manualBase * multiplier;
+                } else {
+                    currentTradeCost = currentTradeCost * multiplier;
+                }
+                consecutiveLosses++;
+            } else {
+                 currentTradeCost = currentTradeCost || manualBase;
+                 consecutiveLosses = 0;
+            }
+        } else {
+            if (tradeCount === 0 || result === 'Win') {
+                currentTradeCost = baseSuggestedCost;
+                consecutiveLosses = 0;
+            } else if (result === 'Loss') {
+                currentTradeCost = currentTradeCost * multiplier;
+                consecutiveLosses++;
+            } else {
+                 currentTradeCost = baseSuggestedCost;
+                 consecutiveLosses = 0;
+            }
+        }
+
+        currentTradeCost = Math.max(1.00, currentTradeCost); 
+
+        if (capital > 0 && initialCapital > 0 && maxDailyLossValue > 0) {
+            if (capital - currentTradeCost < (initialCapital - maxDailyLossValue)) {
+                flashErr("Suggested next trade exceeds remaining daily loss limit. Resetting to base size.");
+                currentTradeCost = manualOverride ? manualBase : baseSuggestedCost;
+                if (capital - currentTradeCost < (initialCapital - maxDailyLossValue)) {
+                    flashErr("Even base size exceeds remaining daily loss limit. Halting session.");
+                    haltSession("Insufficient capital to meet minimum trade size within loss limit.");
+                    return;
+                }
+            }
+        }
+        
+        suggestedBox.innerText = currentTradeCost.toFixed(2);
+    }
+
+    function updateTradeMode() {
+        const manualValue = parseFloat(startManualTradeInput.value);
+        
+        if (useManualStartCheckbox.checked) {
+            if (!isNaN(manualValue) && manualValue >= 1.00) {
+                manualOverride = true;
+                manualBase = manualValue;
+                currentTradeCost = manualBase;
+                consecutiveLosses = 0;
+                suggestedBox.innerText = manualBase.toFixed(2);
+                flashInfo(`Switched to Manual mode. Next trade: $${manualBase.toFixed(2)}`);
+            } else {
+                useManualStartCheckbox.checked = false;
+                manualOverride = false;
+                calculateNextTradeCost(lastTradeResult);
+                flashErr("Manual amount is invalid/empty. Reverting to Auto mode.");
+            }
+        } else {
+            manualOverride = false;
+            consecutiveLosses = 0;
+            calculateNextTradeCost(lastTradeResult);
+            flashInfo("Switched to Auto mode. Next trade calculated automatically.");
+        }
+        
+        saveState();
+    }
+
+    // --- SESSION MANAGEMENT ---
+    function startSession() {
+        // **FIX: Check if we're resuming a halted session or starting new**
+        const isResuming = sessionHalted && sessionTradeCount > 0 && sessionTradeCount < sessionTradeLimit;
+        
+        if (isResuming) {
+            // Resume existing session - don't reset trade count
+            sessionHalted = false;
+            currentSessionStartTime = Date.now();
+            
+            setControlsEnabled(true);
+            startBtn.disabled = true;
+            resetSessionBtn.style.display = 'block';
+            
+            // Clear halt reason when resuming
+            haltReason = '';
+            haltSummarySection.style.display = 'none';
+            
+            updateSessionStatus();
+            saveState();
+            
+            flashInfo(`Session resumed! Continuing from trade ${sessionTradeCount}/${sessionTradeLimit}`);
+            return;
+        }
+        
+        // **FIX: Starting a fresh session**
+        const today = new Date().toISOString().split('T')[0];
+        if (today !== lastTradeDate) {
+            // Reset session count for all tiers on new day
+            tierSessionCounts['Free'] = 0;
+            tierSessionCounts['Pro'] = 0;
+            tierSessionCounts['Unlimited'] = 0;
+            currentSessionCount = 0;
+            lastTradeDate = today;
+            saveState();
+        }
+        
+        if (currentTier !== 'Unlimited' && currentSessionCount >= dailySessionLimit) {
+            flashErr(`Daily session limit reached (${dailySessionLimit} sessions). Please wait until tomorrow.`);
+            return;
+        }
+
+        if (currentTier !== 'Unlimited' && Date.now() < nextSessionStartTime) {
+            flashErr(`Session lock active. Please wait ${Math.ceil((nextSessionStartTime - Date.now()) / 60000)} minutes.`);
+            return;
+        }
+
+        initialCapital = parseFloat(document.getElementById('capital').value) || 0;
+        capital = initialCapital;
+        targetProfit = parseFloat(document.getElementById('profit').value) || 0;
+        payout = parseFloat(document.getElementById('payout').value) || 0;
+        winRate = parseFloat(document.getElementById('winrate').value) || 0;
+        maxDailyLossPercent = parseFloat(document.getElementById('maxDailyLossPercent').value) || 0;
+        maxDrawdownValue = parseFloat(document.getElementById('maxDrawdownValue').value) || 0;
+        
+        if (initialCapital < 100) {
+            flashErr('Initial capital must be at least $100.');
+            return;
+        }
+        if (targetProfit < 1) {
+            flashErr('Target profit must be at least $1.');
+            return;
+        }
+        if (payout < 1 || payout > 100) {
+            flashErr('Payout must be between 1% and 100%.');
+            return;
+        }
+        if (winRate < 1 || winRate > 100) {
+            flashErr('Win rate must be between 1% and 100%.');
+            return;
+        }
+        if (maxDailyLossPercent < 1 || maxDailyLossPercent > 100) {
+            flashErr('Max Daily Loss must be between 1% and 100%.');
+            return;
+        }
+        if (maxDrawdownValue < 1) {
+            flashErr('Max Drawdown must be at least $1.');
+            return;
+        }
+
+        sessionTradeCount = 0;
+        totalProfit = 0;
+        currentTradeCost = 0;
+        highestCapitalPeak = initialCapital;
+        currentDrawdown = 0;
+        maxDailyLossValue = initialCapital * (maxDailyLossPercent / 100);
+
+        consecutiveLosses = 0;
+        lastTradeResult = null;
+
+        // Reset warning flags for new session
+        profitTargetWarningShown = false;
+        dailyLossWarningShown = false;
+        drawdownWarningShown = false;
+
+        baseSuggestedCost = updateSuggestedBox();
+        
+        manualOverride = useManualStartCheckbox.checked;
+        if (manualOverride) {
+            manualBase = parseFloat(startManualTradeInput.value) || 0;
+            if (manualBase < 1) {
+                flashErr('Manual trade cost must be at least $1.');
+                return;
+            }
+            if (manualBase > capital) {
+                flashErr('Manual trade cost cannot exceed current capital.');
+                return;
+            }
+        }
+
+        sessionHalted = false;
+        currentSessionStartTime = Date.now();
+        currentSessionCount++;
+        
+        // Update the tier session count
+        tierSessionCounts[currentTier] = currentSessionCount;
+        
+        calculateNextTradeCost(null);
+        
+        if (currentTier !== 'Unlimited') {
+            if (sessionTimerIntervalId) clearInterval(sessionTimerIntervalId);
+            sessionTimerIntervalId = setInterval(() => {
+                haltSession('Session time limit reached (30/90 minutes).');
+            }, sessionDurationMinutes * 60 * 1000);
+        }
+
+        setControlsEnabled(true);
+        startBtn.disabled = true;
+        resetSessionBtn.style.display = 'block';
+        
+        updateSessionStatus();
+        updateRiskStatus();
+        saveState();
+        
+        flashInfo(`Session started! ${currentTier} Tier active. Good luck!`);
+    }
+
+    // NEW: Function to check and show achievement warnings
+    function checkAchievementWarnings() {
+        // Check profit target achievement - FIXED: Show celebration when target reached
+        if (totalProfit >= targetProfit && !profitTargetWarningShown) {
+            flashSuccess(`🎉 PROFIT TARGET ACHIEVED! You've reached your target profit of $${targetProfit.toFixed(2)}. Current profit: $${totalProfit.toFixed(2)}`);
+            profitTargetWarningShown = true;
+        }
+
+        // Check daily loss limit (90% threshold)
+        const lossRemaining = maxDailyLossValue + totalProfit;
+        const lossPercentage = (lossRemaining / maxDailyLossValue) * 100;
+        
+        if (lossPercentage <= 10 && lossPercentage > 0 && !dailyLossWarningShown) {
+            flashWarning(`⚠️ DAILY LOSS LIMIT APPROACHING! Only $${lossRemaining.toFixed(2)} remaining until daily loss limit of $${maxDailyLossValue.toFixed(2)} is reached.`);
+            dailyLossWarningShown = true;
+        }
+
+        // Check max drawdown (90% threshold)  
+        const drawdownPercentage = (currentDrawdown / maxDrawdownValue) * 100;
+        if (drawdownPercentage >= 90 && drawdownPercentage < 100 && !drawdownWarningShown) {
+            flashWarning(`⚠️ MAX DRAWDOWN APPROACHING! Current drawdown: $${currentDrawdown.toFixed(2)} of $${maxDrawdownValue.toFixed(2)} maximum.`);
+            drawdownWarningShown = true;
+        }
+
+        // Show critical warnings when limits are actually reached
+        if (totalProfit <= -maxDailyLossValue && !dailyLossWarningShown) {
+            flashWarning(`🛑 DAILY LOSS LIMIT REACHED! Total loss: $${Math.abs(totalProfit).toFixed(2)} exceeds your daily limit of $${maxDailyLossValue.toFixed(2)}.`);
+            dailyLossWarningShown = true;
+        }
+
+        if (currentDrawdown >= maxDrawdownValue && !drawdownWarningShown) {
+            flashWarning(`🛑 MAX DRAWDOWN REACHED! Drawdown: $${currentDrawdown.toFixed(2)} exceeds your maximum allowed of $${maxDrawdownValue.toFixed(2)}.`);
+            drawdownWarningShown = true;
+        }
+    }
+
+    function checkSessionLimits() {
+        // Check achievement warnings first
+        checkAchievementWarnings();
+
+        // **FIX: Check if profit target reached (SOFT STOP - session completion)**
+        if (totalProfit >= targetProfit) {
+            haltSession(`🎉 Profit target achieved! Reached $${totalProfit.toFixed(2)} of $${targetProfit.toFixed(2)} target. Session completed successfully!`);
+            return;
+        }
+
+        // **FIXED: Check if capital dropped below 20% of initial capital (80% loss)**
+        if (capital <= initialCapital * 0.2) {
+            // Calculate 15 minute cooldown for Free/Pro tiers
+            nextSessionStartTime = Date.now() + (15 * 60 * 1000); // 15 minutes
+            lastHaltTime = Date.now();
+            
+            if (sessionLockIntervalId) clearInterval(sessionLockIntervalId);
+            sessionLockIntervalId = setInterval(checkSessionLock, 1000);
+            
+            haltSession(`Capital dropped to 20% of initial capital (80% loss)! Trading locked for 15 minutes.`);
+            return;
+        }
+
+        // **UPDATED: Check if trade limit reached (Free: 20, Pro: 50 trades per session)**
+        if (currentTier !== 'Unlimited' && sessionTradeCount >= sessionTradeLimit) {
+            haltSession(`Trade limit reached! Maximum ${sessionTradeLimit} trades per session.`);
+            return;
+        }
+
+        // Show warnings but don't halt session for these conditions
+        if (totalProfit <= -maxDailyLossValue && !dailyLossWarningShown) {
+            flashInfo(`Daily loss limit reached! Total loss: $${Math.abs(totalProfit).toFixed(2)}. Continue trading until session limits.`);
+        }
+
+        if (currentDrawdown >= maxDrawdownValue && !drawdownWarningShown) {
+            flashInfo(`Max drawdown reached! Drawdown: $${currentDrawdown.toFixed(2)}. Continue trading until session limits.`);
+        }
+
+        // Check if capital is too low for minimum trade
+        if (capital < 1) {
+            haltSession('Capital depleted! Cannot place more trades.');
+            return;
+        }
+    }
+
+    function haltSession(reason) {
+        haltReason = reason;
+        sessionHalted = true;
+        
+        if (sessionTimerIntervalId) {
+            clearInterval(sessionTimerIntervalId);
+            sessionTimerIntervalId = null;
+        }
+        
+        // **UPDATED: Apply 15-minute cooldown for capital dropping to 20% (80% loss)**
+        if (currentTier !== 'Unlimited' && reason.includes('20%')) {
+            // Next session start time is already set to 15 minutes from now in checkSessionLimits
+            if (sessionLockIntervalId) clearInterval(sessionLockIntervalId);
+            sessionLockIntervalId = setInterval(checkSessionLock, 1000);
+        } else {
+            // For other halt reasons (SOFT STOPS), allow immediate restart
+            nextSessionStartTime = 0;
+        }
+
+        setControlsEnabled(false);
+        startBtn.disabled = (currentSessionCount >= dailySessionLimit && currentTier !== 'Unlimited') || 
+                           (Date.now() < nextSessionStartTime && currentTier !== 'Unlimited');
+        resetSessionBtn.style.display = 'none';
+        
+        haltSummarySection.style.display = 'block';
+        haltReasonText.innerText = reason;
+        
+        updateSessionStatus();
+        saveState();
+        
+        if (reason.includes('20%')) {
+            const minutesLeft = Math.ceil((nextSessionStartTime - Date.now()) / 60000);
+            flashErr(`Session halted: ${reason} Trading locked for ${minutesLeft} minutes.`);
+        } else {
+            flashInfo(`Session completed: ${reason} Ready for next session.`);
+        }
+    }
+
+    function checkSessionLock() {
+        if (currentTier === 'Unlimited') {
+            if (sessionLockIntervalId) {
+                clearInterval(sessionLockIntervalId);
+                sessionLockIntervalId = null;
+            }
+            startBtn.disabled = sessionHalted ? false : true;
+            return;
+        }
+        
+        if (Date.now() >= nextSessionStartTime) {
+            if (sessionLockIntervalId) {
+                clearInterval(sessionLockIntervalId);
+                sessionLockIntervalId = null;
+            }
+            startBtn.disabled = (currentSessionCount >= dailySessionLimit);
+            updateSessionStatus();
+        } else {
+            startBtn.disabled = true;
+            updateSessionStatus();
+        }
+    }
+
+    function resetSessionOnly() {
+        if (!sessionHalted) {
+            if (!confirm("Are you sure you want to reset the current session? All progress will be lost.")) {
+                return;
+            }
+        }
+        
+        sessionTradeCount = 0;
+        totalProfit = 0;
+        currentTradeCost = 0;
+        highestCapitalPeak = initialCapital;
+        currentDrawdown = 0;
+        maxDailyLossValue = initialCapital * (maxDailyLossPercent / 100);
+        
+        consecutiveLosses = 0;
+        lastTradeResult = null;
+        
+        // Reset warning flags for new session
+        profitTargetWarningShown = false;
+        dailyLossWarningShown = false;
+        drawdownWarningShown = false;
+        
+        // **FIX: Don't clear halt reason on session reset**
+        // haltReason = ''; // DON'T clear halt reason here
+        // haltSummarySection.style.display = 'none'; // DON'T hide halt summary here
+        
+        baseSuggestedCost = updateSuggestedBox();
+        calculateNextTradeCost(null);
+        
+        if (currentTier === 'Unlimited') {
+            sessionHalted = false;
+            currentSessionStartTime = Date.now();
+            
+            setControlsEnabled(true);
+            startBtn.disabled = true;
+            resetSessionBtn.style.display = 'block';
+        } else {
+            sessionHalted = true;
+            setControlsEnabled(false);
+            startBtn.disabled = (currentSessionCount >= dailySessionLimit) || 
+                               (Date.now() < nextSessionStartTime);
+            resetSessionBtn.style.display = 'none';
+        }
+        
+        updateSessionStatus();
+        updateRiskStatus();
+        saveState();
+        
+        flashInfo("Session reset. Ready to start a new session.");
+    }
+
+    function resetAllData() {
+        if (!confirm("Are you sure you want to reset ALL data? This will clear trade history, inputs, and analysis data but preserve your session counts and current session progress.")) {
+            return;
+        }
+        
+        // **FIX: PRESERVE everything except trade history and analysis data**
+        const preservedTierSessionCounts = {...tierSessionCounts};
+        const preservedCurrentSessionCount = currentSessionCount;
+        const preservedDailySessionLimit = dailySessionLimit;
+        const preservedSessionTradeLimit = sessionTradeLimit;
+        const preservedLastTradeDate = lastTradeDate;
+        const preservedSessionHalted = sessionHalted;
+        const preservedSessionTradeCount = sessionTradeCount;
+        const preservedTotalProfit = totalProfit;
+        const preservedCapital = capital;
+        const preservedInitialCapital = initialCapital;
+        const preservedCurrentTradeCost = currentTradeCost;
+        const preservedConsecutiveLosses = consecutiveLosses;
+        const preservedLastTradeResult = lastTradeResult;
+        
+        // Reset only trade history and analysis data
+        tradeCount = 0;
+        tradeHistory = [];
+        
+        // Reset warning flags
+        profitTargetWarningShown = false;
+        dailyLossWarningShown = false;
+        drawdownWarningShown = false;
+        
+        // **FIX: Clear halt reason on hard reset**
+        haltReason = '';
+        haltSummarySection.style.display = 'none';
+        
+        // Restore preserved values - KEEP current session progress
+        tierSessionCounts = preservedTierSessionCounts;
+        currentSessionCount = preservedCurrentSessionCount;
+        dailySessionLimit = preservedDailySessionLimit;
+        sessionTradeLimit = preservedSessionTradeLimit;
+        lastTradeDate = preservedLastTradeDate;
+        sessionHalted = preservedSessionHalted;
+        sessionTradeCount = preservedSessionTradeCount;
+        totalProfit = preservedTotalProfit;
+        capital = preservedCapital;
+        initialCapital = preservedInitialCapital;
+        currentTradeCost = preservedCurrentTradeCost;
+        consecutiveLosses = preservedConsecutiveLosses;
+        lastTradeResult = preservedLastTradeResult;
+        
+        // Reset form inputs to defaults but preserve session progress
+        document.getElementById('capital').value = initialCapital || 1000;
+        document.getElementById('profit').value = targetProfit || 10;
+        document.getElementById('payout').value = payout || 75;
+        document.getElementById('winrate').value = winRate || 55;
+        document.getElementById('maxDailyLossPercent').value = maxDailyLossPercent || 5;
+        document.getElementById('maxDrawdownValue').value = maxDrawdownValue || 50;
+        document.getElementById('strategyTag').value = 'Trend-Following';
+        document.getElementById('marketPairSelect').value = 'EUR/USD';
+        document.getElementById('emotion').value = 'Neutral';
+        document.getElementById('startManualTrade').value = '';
+        document.getElementById('useManualStart').checked = false;
+        
+        updateSuggestedBox();
+        updateSessionStatus();
+        updateRiskStatus();
+        updateTradeHistoryTable();
+        
+        // Maintain current session state
+        if (sessionHalted) {
+            setControlsEnabled(false);
+            startBtn.disabled = false;
+            resetSessionBtn.style.display = 'none';
+        } else {
+            setControlsEnabled(true);
+            startBtn.disabled = true;
+            resetSessionBtn.style.display = 'block';
+        }
+        
+        saveState();
+        
+        flashInfo("Trade history and analysis data cleared. Session progress preserved.");
+    }
+
+    function updateSessionStatus() {
+        const capitalValue = document.getElementById('capitalValue');
+        const sessionCountValue = document.getElementById('sessionCountValue');
+        const tradesTodayBadge = document.getElementById('tradesTodayBadge');
+        const sessionStatusBadge = document.getElementById('sessionStatusBadge');
+        
+        capitalValue.innerText = `$${capital.toFixed(2)}`;
+        sessionCountValue.innerText = `${currentSessionCount} / ${(currentTier === 'Unlimited' ? '∞' : dailySessionLimit)}`;
+        tradesTodayBadge.innerText = `${sessionTradeCount} / ${(currentTier === 'Unlimited' ? '∞' : sessionTradeLimit)}`;
+        
+        if (sessionHalted) {
+            sessionStatusBadge.innerText = 'Halted';
+            sessionStatusBadge.className = 'badge session-halt';
+            
+            if (currentTier !== 'Unlimited' && Date.now() < nextSessionStartTime) {
+                const minutesLeft = Math.ceil((nextSessionStartTime - Date.now()) / 60000);
+                summaryText.innerText = `Trading locked. Next session in ${minutesLeft} minutes.`;
+            } else if (currentSessionCount >= dailySessionLimit && currentTier !== 'Unlimited') {
+                summaryText.innerText = 'Daily session limit reached. Try again tomorrow.';
+            } else {
+                summaryText.innerText = 'Session completed. Ready to start.';
+            }
+        } else {
+            sessionStatusBadge.innerText = 'Active';
+            sessionStatusBadge.className = 'badge';
+            
+            const elapsedMinutes = Math.floor((Date.now() - currentSessionStartTime) / 60000);
+            const timeLeft = sessionDurationMinutes - elapsedMinutes;
+            
+            if (currentTier === 'Unlimited') {
+                summaryText.innerText = `Unlimited Session Active | Trades: ${sessionTradeCount} | P&L: $${totalProfit.toFixed(2)}`;
+            } else {
+                summaryText.innerText = `Session Active | ${timeLeft} min left | Trades: ${sessionTradeCount}/${sessionTradeLimit} | P&L: $${totalProfit.toFixed(2)}`;
+            }
+        }
+    }
+
+    function updateRiskStatus() {
+        const maxLossRemainingValue = document.getElementById('maxLossRemainingValue');
+        const maxDrawdownValueBadge = document.getElementById('maxDrawdownValueBadge');
+        const lossLimitBadge = document.getElementById('lossLimitBadge');
+        const drawdownBadge = document.getElementById('drawdownBadge');
+        
+        const lossRemaining = maxDailyLossValue + totalProfit;
+        maxLossRemainingValue.innerText = lossRemaining.toFixed(2);
+        maxDrawdownValueBadge.innerText = currentDrawdown.toFixed(2);
+        
+        if (lossRemaining < maxDailyLossValue * 0.2) {
+            lossLimitBadge.className = 'badge risk-alert';
+        } else {
+            lossLimitBadge.className = 'badge';
+        }
+        
+        if (currentDrawdown > maxDrawdownValue * 0.8) {
+            drawdownBadge.className = 'badge risk-alert';
+        } else {
+            drawdownBadge.className = 'badge';
+        }
+    }
+
+    // --- TRADE LOGIC ---
+    function recordTrade(isWin) {
+        if (sessionHalted) {
+            flashErr('Session is halted. Please start a new session.');
+            return;
+        }
+
+        const strategy = strategyTagSelect.value;
+        const market = getCurrentMarketPair(true);
+        const emotion = emotionSelect.value;
+        
+        const tradeCost = currentTradeCost;
+
+        if (tradeCost > capital) {
+            haltSession(`Trade cost ($${tradeCost.toFixed(2)}) exceeds available capital ($${capital.toFixed(2)}).`);
+            return;
+        }
+
+        if (tradeCost < 1) {
+            flashErr('Trade cost must be at least $1.');
+            return;
+        }
+
+        let pnl = 0;
+        if (isWin) {
+            pnl = tradeCost * (payout / 100);
+        } else {
+            pnl = -tradeCost;
+        }
+
+        capital += pnl;
+        totalProfit += pnl;
+        tradeCount++;
+        sessionTradeCount++;
+
+        if (capital > highestCapitalPeak) {
+            highestCapitalPeak = capital;
+        }
+        currentDrawdown = highestCapitalPeak - capital;
+
+        const tradeResult = isWin ? 'Win' : 'Loss';
+        tradeHistory.push({
+            id: tradeCount,
+            cost: tradeCost,
+            pnl: pnl,
+            capitalAfter: capital,
+            nextSuggested: currentTradeCost,
+            strategy: strategy,
+            market: market,
+            emotion: emotion,
+            result: tradeResult,
+            timestamp: new Date().toISOString()
+        });
+
+        lastTradeResult = tradeResult;
+        calculateNextTradeCost(tradeResult);
+
+        checkSessionLimits();
+
+        updateTradeHistoryTable();
+        updateSessionStatus();
+        updateRiskStatus();
+        saveState();
+
+        playNotificationSound(isWin);
+
+        if (isWin) {
+            flashInfo(`WIN recorded! +$${pnl.toFixed(2)} | Capital: $${capital.toFixed(2)} | Next: $${currentTradeCost.toFixed(2)}`);
+        } else {
+            flashInfo(`LOSS recorded! -$${Math.abs(pnl).toFixed(2)} | Capital: $${capital.toFixed(2)} | Next: $${currentTradeCost.toFixed(2)}`);
+        }
+    }
+
+    function playNotificationSound(isWin) {
+        console.log(`Playing ${isWin ? 'win' : 'loss'} sound`);
+    }
+
+    // --- ANALYSIS FUNCTIONS ---
+    
+    // **FIX: Update filter options when trade history changes**
+    function updateAnalyzerFilters() {
+        const strategyFilter = document.getElementById('filterStrategy');
+        const marketFilter = document.getElementById('filterMarket');
+        
+        // Clear existing options (keep "All" option)
+        strategyFilter.innerHTML = '<option value="all">All Strategies</option>';
+        marketFilter.innerHTML = '<option value="all">All Markets</option>';
+        
+        // Get unique strategies and markets from trade history
+        const strategies = [...new Set(tradeHistory.map(trade => trade.strategy))];
+        const markets = [...new Set(tradeHistory.map(trade => trade.market))];
+        
+        // Add strategy options
+        strategies.forEach(strategy => {
+            const option = document.createElement('option');
+            option.value = strategy;
+            option.textContent = strategy;
+            strategyFilter.appendChild(option);
+        });
+        
+        // Add market options
+        markets.forEach(market => {
+            const option = document.createElement('option');
+            option.value = market;
+            option.textContent = market;
+            marketFilter.appendChild(option);
+        });
+    }
+
+    function toggleAnalysisSection() {
+        if (analysisSection.style.display === 'none' || analysisSection.style.display === '') {
+            // **FIX: Update filters before running analysis**
+            updateAnalyzerFilters();
+            runAnalysis();
+            analysisSection.style.display = 'block';
+            showAnalyzerBtn.innerText = 'Hide Analyzer';
+        } else {
+            analysisSection.style.display = 'none';
+            showAnalyzerBtn.innerText = 'Analyze History 📊';
+        }
+    }
+
+    function runAnalysis() {
+        if (tradeHistory.length === 0) {
+            document.getElementById('analyzerTotalTrades').innerText = '0';
+            document.getElementById('analyzerNetPNL').innerText = '0.00';
+            document.getElementById('analyzerWinRate').innerText = '0.00%';
+            document.getElementById('analyzerBestStrategy').innerText = 'N/A';
+            document.getElementById('analyzerLossEmotion').innerText = 'N/A';
+            document.getElementById('analyzerLargestTrade').innerText = 'N/A';
+            return;
+        }
+
+        const strategyFilter = filterStrategySelect.value;
+        const marketFilter = filterMarketSelect.value;
+        
+        let filteredTrades = tradeHistory;
+        if (strategyFilter !== 'all') {
+            filteredTrades = filteredTrades.filter(trade => trade.strategy === strategyFilter);
+        }
+        if (marketFilter !== 'all') {
+            filteredTrades = filteredTrades.filter(trade => trade.market === marketFilter);
+        }
+        
+        const filterText = document.getElementById('analysisFilterText');
+        if (strategyFilter === 'all' && marketFilter === 'all') {
+            filterText.innerText = `Showing analysis for all ${filteredTrades.length} historical trades.`;
+        } else {
+            filterText.innerText = `Showing analysis for ${filteredTrades.length} trades (filtered by ${strategyFilter !== 'all' ? 'Strategy: ' + strategyFilter : ''}${strategyFilter !== 'all' && marketFilter !== 'all' ? ' and ' : ''}${marketFilter !== 'all' ? 'Market: ' + marketFilter : ''}).`;
+        }
+
+        const totalTrades = filteredTrades.length;
+        const netPNL = filteredTrades.reduce((sum, trade) => sum + trade.pnl, 0);
+        const winTrades = filteredTrades.filter(trade => trade.pnl > 0).length;
+        const winRate = totalTrades > 0 ? (winTrades / totalTrades) * 100 : 0;
+        
+        const strategyPerformance = {};
+        filteredTrades.forEach(trade => {
+            if (!strategyPerformance[trade.strategy]) {
+                strategyPerformance[trade.strategy] = { pnl: 0, count: 0 };
+            }
+            strategyPerformance[trade.strategy].pnl += trade.pnl;
+            strategyPerformance[trade.strategy].count++;
+        });
+        
+        let bestStrategy = 'N/A';
+        let bestStrategyPNL = -Infinity;
+        for (const [strategy, data] of Object.entries(strategyPerformance)) {
+            if (data.pnl > bestStrategyPNL) {
+                bestStrategy = strategy;
+                bestStrategyPNL = data.pnl;
+            }
+        }
+        
+        const emotionLosses = {};
+        filteredTrades.forEach(trade => {
+            if (trade.pnl < 0) {
+                if (!emotionLosses[trade.emotion]) {
+                    emotionLosses[trade.emotion] = 0;
+                }
+                emotionLosses[trade.emotion]++;
+            }
+        });
+        
+        let worstEmotion = 'N/A';
+        let maxLosses = 0;
+        for (const [emotion, count] of Object.entries(emotionLosses)) {
+            if (count > maxLosses) {
+                worstEmotion = emotion;
+                maxLosses = count;
+            }
+        }
+        
+        let largestTrade = { pnl: 0, description: 'N/A' };
+        filteredTrades.forEach(trade => {
+            if (Math.abs(trade.pnl) > Math.abs(largestTrade.pnl)) {
+                largestTrade = { 
+                    pnl: trade.pnl, 
+                    description: `$${Math.abs(trade.pnl).toFixed(2)} ${trade.pnl >= 0 ? 'gain' : 'loss'} (Trade #${trade.id})`
+                };
+            }
+        });
+
+        document.getElementById('analyzerTotalTrades').innerText = totalTrades;
+        document.getElementById('analyzerNetPNL').innerText = netPNL.toFixed(2);
+        document.getElementById('analyzerNetPNL').className = netPNL >= 0 ? 'positive-pnl' : 'negative-pnl';
+        document.getElementById('analyzerWinRate').innerText = winRate.toFixed(2) + '%';
+        document.getElementById('analyzerBestStrategy').innerText = bestStrategy === 'N/A' ? 'N/A' : `${bestStrategy} ($${bestStrategyPNL.toFixed(2)})`;
+        document.getElementById('analyzerLossEmotion').innerText = worstEmotion === 'N/A' ? 'N/A' : `${worstEmotion} (${maxLosses} losses)`;
+        document.getElementById('analyzerLargestTrade').innerText = largestTrade.description;
+    }
+
+    function downloadCSV() {
+        if (tradeHistory.length === 0) {
+            flashErr('No trade history to download.');
+            return;
+        }
+
+        let csvContent = "ID,Cost,Result,P&L,Capital After,Next Suggested,Strategy,Market,Emotion,Timestamp\n";
+        
+        tradeHistory.forEach(trade => {
+            csvContent += `${trade.id},${trade.cost.toFixed(2)},${trade.result},${trade.pnl.toFixed(2)},${trade.capitalAfter.toFixed(2)},${trade.nextSuggested.toFixed(2)},${trade.strategy},${trade.market},${trade.emotion},${trade.timestamp}\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `astronuri-trades-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        flashInfo('Trade history downloaded as CSV.');
+    }
+
+    function updateTradeHistoryTable() {
+        const tradeBody = document.getElementById('tradeBody');
+        tradeBody.innerHTML = '';
+        
+        if (tradeHistory.length === 0) {
+            tradeTable.style.display = 'none';
+            return;
+        }
+        
+        tradeTable.style.display = 'table';
+        
+        // REVERSED: Show latest trades on top (most recent first)
+        const recentTrades = [...tradeHistory].reverse().slice(0, 10); // Get last 10 trades, reversed
+        
+        recentTrades.forEach((trade, index) => {
+            const isLatest = index === 0; // First row in reversed list is the latest trade
+            const row = document.createElement('tr');
+            if (isLatest) row.className = 'latest';
+            
+            row.innerHTML = `
+                <td>${trade.id}</td>
+                <td>$${trade.cost.toFixed(2)}</td>
+                <td class="${trade.pnl >= 0 ? 'trade-gain' : 'trade-loss'}">${trade.result} (${trade.pnl >= 0 ? '+' : ''}$${trade.pnl.toFixed(2)})</td>
+                <td>$${trade.capitalAfter.toFixed(2)}</td>
+                <td>$${trade.nextSuggested.toFixed(2)}</td>
+                <td>${trade.strategy}</td>
+                <td>${trade.market}</td>
+                <td>${trade.emotion}</td>
+            `;
+            
+            tradeBody.appendChild(row);
+        });
+        
+        // **FIX: Update analyzer filters when trade history changes**
+        updateAnalyzerFilters();
+    }
+
+    // --- INITIALIZATION ---
+    function init() {
+        console.log('Initializing ASTRONuRi Tracker...');
+        
+        // Load saved state
+        const stateLoaded = loadState();
+        
+        // Check for saved license
+        checkLocalLicense();
+        
+        // Set up event listeners
+        startBtn.addEventListener('click', startSession);
+        addWinBtn.addEventListener('click', () => recordTrade(true));
+        addLossBtn.addEventListener('click', () => recordTrade(false));
+        resetBtn.addEventListener('click', resetAllData);
+        resetSessionBtn.addEventListener('click', resetSessionOnly);
+        
+        logoutLicenseBtn.addEventListener('click', logoutLicense);
+        
+        useManualStartCheckbox.addEventListener('change', updateTradeMode);
+        
+        startManualTradeInput.addEventListener('input', function() {
+            const value = parseFloat(this.value) || 0;
+            if (useManualStartCheckbox.checked && value >= 1) {
+                manualBase = value;
+                if (manualOverride) {
+                    currentTradeCost = manualBase;
+                    suggestedBox.innerText = manualBase.toFixed(2);
+                    saveState();
+                }
+            }
+        });
+        
+        marketPairSelect.addEventListener('change', toggleMarketPairInput);
+        
+        // Form updates
+        const formInputs = ['capital', 'profit', 'payout', 'winrate', 'maxDailyLossPercent', 'maxDrawdownValue'];
+        formInputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', function() {
+                baseSuggestedCost = updateSuggestedBox();
+                if (!manualOverride) {
+                    calculateNextTradeCost(lastTradeResult);
+                }
+                saveState();
+            });
+        });
+        
+        // Subscription tier changes
+        subscriptionTierSelect.addEventListener('change', function() {
+            const selectedTier = this.value;
+            if (selectedTier === 'Free') {
+                // Save current tier's session count before switching
+                tierSessionCounts[currentTier] = currentSessionCount;
+                // Switch to Free tier and load its session count
+                currentTier = 'Free';
+                currentSessionCount = tierSessionCounts['Free'] || 0;
+                updateTierSettings();
+                flashInfo("Switched to Free tier. Session count restored.");
+            } else {
+                openLicenseModal(selectedTier);
+            }
+        });
+        
+        // License modal
+        activateLicenseBtn.addEventListener('click', validateLicense);
+        cancelLicenseBtn.addEventListener('click', function() {
+            licenseModal.style.display = 'none';
+            subscriptionTierSelect.value = currentTier;
+        });
+        
+        // Analyzer filters
+        filterStrategySelect.addEventListener('change', runAnalysis);
+        filterMarketSelect.addEventListener('change', runAnalysis);
+        
+        // Initial UI setup
+        toggleMarketPairInput();
+        updateUIFromState();
+        
+        if (!stateLoaded) {
+            updateSuggestedBox();
+            setControlsEnabled(false);
+        }
+        
+        console.log('ASTRONuRi Tracker initialized successfully!');
+        flashInfo('ASTRONuRi Tracker loaded successfully!');
+    }
+
+    // Start the application
+    document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
