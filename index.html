@@ -338,6 +338,22 @@ input[type="text"]:focus, input[type="number"]:focus, select:focus {
     flex-grow: 1;
 }
 
+/* Trade Details Compact Layout */
+.trade-details-compact {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+}
+.trade-details-compact .form-group label {
+    font-size: 0.8em;
+}
+.trade-details-compact input[type="number"],
+.trade-details-compact select {
+    font-size: 0.9em;
+    padding: 8px;
+}
+
 /* Media Queries */
 @media (min-width: 768px) {
     .container {
@@ -351,6 +367,27 @@ input[type="text"]:focus, input[type="number"]:focus, select:focus {
     }
     .analyzer-grid {
         grid-template-columns: repeat(6, 1fr);
+    }
+}
+
+@media (max-width: 1024px) {
+    .trade-details-compact {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+}
+
+@media (max-width: 768px) {
+    .trade-details-compact {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .trade-details-compact {
+        grid-template-columns: 1fr;
+        gap: 8px;
     }
 }
 </style>
@@ -401,7 +438,7 @@ input[type="text"]:focus, input[type="number"]:focus, select:focus {
         </div>
         
         <h3>2. Trade Details</h3>
-        <div class="form-grid">
+        <div class="trade-details-compact">
             <div class="form-group">
                 <label for="payout">Payout (%)</label>
                 <input type="number" id="payout" value="75" min="1" max="100">
@@ -470,7 +507,7 @@ input[type="text"]:focus, input[type="number"]:focus, select:focus {
         
         <div class="badge-group">
             <span class="badge" id="sessionStatusBadge">Idle</span>
-            <span class="badge" id="capitalValue">0.00</span>
+            <span class="badge" id="capitalValue">$0.00</span>
             <span class="badge" id="sessionCountValue">0 / 3</span>
             <span class="badge" id="tradesTodayBadge">0 / 20</span>
             <!-- NEW: Target Trade Status Badge -->
@@ -1147,53 +1184,63 @@ input[type="text"]:focus, input[type="number"]:focus, select:focus {
 
     // --- RECOVERY LOGIC ---
     function calculateNextTradeCost(result) {
+        console.log('=== CALCULATING NEXT TRADE COST ===');
+        console.log('Previous result:', result);
+        console.log('Manual override:', manualOverride);
+        console.log('Manual base:', manualBase);
+        console.log('Current trade cost:', currentTradeCost);
+        console.log('Consecutive losses:', consecutiveLosses);
+        console.log('Base suggested cost:', baseSuggestedCost);
+        
         if (baseSuggestedCost === 0) {
              baseSuggestedCost = updateSuggestedBox();
         }
 
         if(manualOverride && useManualStartCheckbox.checked) {
+            console.log('Using MANUAL mode calculation');
             if (result === 'Win') {
+                console.log('WIN in manual mode - reset to manual base');
                 currentTradeCost = manualBase;
                 consecutiveLosses = 0;
             } else if (result === 'Loss') {
+                console.log('LOSS in manual mode - applying multiplier');
                 if (consecutiveLosses === 0) {
+                    console.log('First loss - multiplying manual base by', multiplier);
                     currentTradeCost = manualBase * multiplier;
                 } else {
+                    console.log('Consecutive loss - multiplying current cost by', multiplier);
                     currentTradeCost = currentTradeCost * multiplier;
                 }
                 consecutiveLosses++;
             } else {
-                 currentTradeCost = currentTradeCost || manualBase;
-                 consecutiveLosses = 0;
+                console.log('No previous result - using manual base');
+                currentTradeCost = currentTradeCost || manualBase;
+                consecutiveLosses = 0;
             }
         } else {
+            console.log('Using AUTO mode calculation');
             if (tradeCount === 0 || result === 'Win') {
+                console.log('First trade or WIN - using base suggested cost');
                 currentTradeCost = baseSuggestedCost;
                 consecutiveLosses = 0;
             } else if (result === 'Loss') {
+                console.log('LOSS in auto mode - multiplying by', multiplier);
                 currentTradeCost = currentTradeCost * multiplier;
                 consecutiveLosses++;
             } else {
-                 currentTradeCost = baseSuggestedCost;
-                 consecutiveLosses = 0;
+                console.log('No previous result - using base suggested cost');
+                currentTradeCost = baseSuggestedCost;
+                consecutiveLosses = 0;
             }
         }
 
         currentTradeCost = Math.max(1.00, currentTradeCost); 
+        console.log('Final calculated cost:', currentTradeCost);
 
-        if (capital > 0 && initialCapital > 0 && maxDailyLossValue > 0) {
-            if (capital - currentTradeCost < (initialCapital - maxDailyLossValue)) {
-                flashErr("Suggested next trade exceeds remaining daily loss limit. Resetting to base size.");
-                currentTradeCost = manualOverride ? manualBase : baseSuggestedCost;
-                if (capital - currentTradeCost < (initialCapital - maxDailyLossValue)) {
-                    flashErr("Even base size exceeds remaining daily loss limit. Halting session.");
-                    haltSession("Insufficient capital to meet minimum trade size within loss limit.");
-                    return;
-                }
-            }
-        }
+        // FIXED: Removed problematic capital validation that was causing false warnings
         
         suggestedBox.innerText = currentTradeCost.toFixed(2);
+        console.log('=== CALCULATION COMPLETE ===');
     }
 
     function updateTradeMode() {
@@ -1225,10 +1272,13 @@ input[type="text"]:focus, input[type="number"]:focus, select:focus {
 
     // --- SESSION MANAGEMENT ---
     function startSession() {
+        console.log('=== STARTING SESSION ===');
+        
         // **FIX: Check if we're resuming a halted session or starting new**
         const isResuming = sessionHalted && sessionTradeCount > 0 && sessionTradeCount < sessionTradeLimit;
         
         if (isResuming) {
+            console.log('Resuming existing session');
             // Resume existing session - don't reset trade count
             sessionHalted = false;
             currentSessionStartTime = Date.now();
@@ -1248,6 +1298,7 @@ input[type="text"]:focus, input[type="number"]:focus, select:focus {
             return;
         }
         
+        console.log('Starting FRESH session');
         // **FIX: Starting a fresh session**
         const today = new Date().toISOString().split('T')[0];
         if (today !== lastTradeDate) {
@@ -1277,6 +1328,12 @@ input[type="text"]:focus, input[type="number"]:focus, select:focus {
         winRate = parseFloat(document.getElementById('winrate').value) || 0;
         maxDailyLossPercent = parseFloat(document.getElementById('maxDailyLossPercent').value) || 0;
         maxDrawdownValue = parseFloat(document.getElementById('maxDrawdownValue').value) || 0;
+        
+        console.log('Session starting values:');
+        console.log('Initial Capital:', initialCapital);
+        console.log('Target Profit:', targetProfit);
+        console.log('Capital:', capital);
+        console.log('Total Profit:', totalProfit);
         
         if (initialCapital < 100) {
             flashErr('Initial capital must be at least $100.');
@@ -1357,6 +1414,7 @@ input[type="text"]:focus, input[type="number"]:focus, select:focus {
         updateRiskStatus();
         saveState();
         
+        console.log('=== SESSION STARTED SUCCESSFULLY ===');
         flashInfo(`Session started! ${currentTier} Tier active. Good luck!`);
     }
 
@@ -1397,17 +1455,28 @@ input[type="text"]:focus, input[type="number"]:focus, select:focus {
     }
 
     function checkSessionLimits() {
+        console.log('=== CHECKING SESSION LIMITS ===');
+        console.log('Session Trade Count:', sessionTradeCount, '/', sessionTradeLimit);
+        console.log('Total Profit:', totalProfit, 'Target Profit:', targetProfit);
+        console.log('Capital:', capital, 'Initial Capital:', initialCapital);
+        console.log('Max Daily Loss Value:', maxDailyLossValue);
+        console.log('Current Drawdown:', currentDrawdown, 'Max Drawdown:', maxDrawdownValue);
+        
         // Check achievement warnings first
         checkAchievementWarnings();
 
-        // **FIX: Check if profit target reached (SOFT STOP - session completion)**
+        // **DEBUG: Check if profit target reached (SOFT STOP - session completion)**
         if (totalProfit >= targetProfit) {
+            console.log('🛑 PROFIT TARGET REACHED - Halting session');
+            console.log('Total Profit:', totalProfit, 'Target Profit:', targetProfit);
             haltSession(`🎉 Profit target achieved! Reached $${totalProfit.toFixed(2)} of $${targetProfit.toFixed(2)} target. Session completed successfully!`);
             return;
         }
 
-        // **FIXED: Check if capital dropped below 20% of initial capital (80% loss)**
+        // **DEBUG: Check if capital dropped below 20% of initial capital (80% loss)**
         if (capital <= initialCapital * 0.2) {
+            console.log('🛑 CAPITAL DROPPED TO 20% - Halting session');
+            console.log('Capital:', capital, '20% of Initial:', initialCapital * 0.2);
             // Calculate 15 minute cooldown for Free/Pro tiers
             nextSessionStartTime = Date.now() + (15 * 60 * 1000); // 15 minutes
             lastHaltTime = Date.now();
@@ -1419,29 +1488,37 @@ input[type="text"]:focus, input[type="number"]:focus, select:focus {
             return;
         }
 
-        // **UPDATED: Check if trade limit reached (Free: 20, Pro: 50 trades per session)**
+        // **DEBUG: Check if trade limit reached (Free: 20, Pro: 50 trades per session)**
         if (currentTier !== 'Unlimited' && sessionTradeCount >= sessionTradeLimit) {
+            console.log('🛑 TRADE LIMIT REACHED - Halting session');
+            console.log('Session Trade Count:', sessionTradeCount, 'Session Trade Limit:', sessionTradeLimit);
             haltSession(`Trade limit reached! Maximum ${sessionTradeLimit} trades per session.`);
             return;
         }
 
         // Show warnings but don't halt session for these conditions
         if (totalProfit <= -maxDailyLossValue && !dailyLossWarningShown) {
+            console.log('⚠️ DAILY LOSS LIMIT REACHED - Warning only');
             flashInfo(`Daily loss limit reached! Total loss: $${Math.abs(totalProfit).toFixed(2)}. Continue trading until session limits.`);
         }
 
         if (currentDrawdown >= maxDrawdownValue && !drawdownWarningShown) {
+            console.log('⚠️ MAX DRAWDOWN REACHED - Warning only');
             flashInfo(`Max drawdown reached! Drawdown: $${currentDrawdown.toFixed(2)}. Continue trading until session limits.`);
         }
 
         // Check if capital is too low for minimum trade
         if (capital < 1) {
+            console.log('🛑 CAPITAL DEPLETED - Halting session');
             haltSession('Capital depleted! Cannot place more trades.');
             return;
         }
+
+        console.log('✅ NO SESSION LIMITS TRIGGERED - Continue trading');
     }
 
     function haltSession(reason) {
+        console.log('🛑 HALTING SESSION:', reason);
         haltReason = reason;
         sessionHalted = true;
         
@@ -1558,23 +1635,47 @@ input[type="text"]:focus, input[type="number"]:focus, select:focus {
             return;
         }
         
-        // **FIX: PRESERVE everything except trade history and analysis data**
+        // **FIX: COMPLETELY RESET ALL SESSION PROGRESS**
         const preservedTierSessionCounts = {...tierSessionCounts};
         const preservedCurrentSessionCount = currentSessionCount;
         const preservedDailySessionLimit = dailySessionLimit;
         const preservedSessionTradeLimit = sessionTradeLimit;
         const preservedLastTradeDate = lastTradeDate;
-        const preservedSessionHalted = sessionHalted;
-        const preservedSessionTradeCount = sessionTradeCount;
-        const preservedTotalProfit = totalProfit;
-        const preservedCapital = capital;
-        const preservedInitialCapital = initialCapital;
-        const preservedCurrentTradeCost = currentTradeCost;
-        const preservedConsecutiveLosses = consecutiveLosses;
-        const preservedLastTradeResult = lastTradeResult;
         
-        // Reset only trade history and analysis data
+        // **COMPLETE RESET: Get fresh values from form inputs**
+        const initialCapitalFromForm = parseFloat(document.getElementById('capital').value) || 1000;
+        const targetProfitFromForm = parseFloat(document.getElementById('profit').value) || 10;
+        const payoutFromForm = parseFloat(document.getElementById('payout').value) || 75;
+        const winRateFromForm = parseFloat(document.getElementById('winrate').value) || 55;
+        const maxDailyLossPercentFromForm = parseFloat(document.getElementById('maxDailyLossPercent').value) || 5;
+        const maxDrawdownValueFromForm = parseFloat(document.getElementById('maxDrawdownValue').value) || 50;
+        
+        // **COMPLETE RESET of all session state**
+        initialCapital = initialCapitalFromForm;
+        capital = initialCapitalFromForm;
+        targetProfit = targetProfitFromForm;
+        payout = payoutFromForm;
+        winRate = winRateFromForm;
+        maxDailyLossPercent = maxDailyLossPercentFromForm;
+        maxDrawdownValue = maxDrawdownValueFromForm;
+        maxDailyLossValue = initialCapitalFromForm * (maxDailyLossPercentFromForm / 100);
+        
+        // Reset ALL trade and session progress
         tradeCount = 0;
+        sessionTradeCount = 0;
+        totalProfit = 0;
+        currentTradeCost = 0;
+        highestCapitalPeak = initialCapitalFromForm;
+        currentDrawdown = 0;
+        
+        consecutiveLosses = 0;
+        lastTradeResult = null;
+        sessionHalted = true;
+        currentSessionStartTime = 0;
+        nextSessionStartTime = 0;
+        lastHaltTime = 0;
+        
+        // Reset trade history
         tradeHistory = [];
         
         // Reset warning flags
@@ -1586,53 +1687,53 @@ input[type="text"]:focus, input[type="number"]:focus, select:focus {
         haltReason = '';
         haltSummarySection.style.display = 'none';
         
-        // Restore preserved values - KEEP current session progress
+        // Restore preserved values - ONLY session counts and dates
         tierSessionCounts = preservedTierSessionCounts;
         currentSessionCount = preservedCurrentSessionCount;
         dailySessionLimit = preservedDailySessionLimit;
         sessionTradeLimit = preservedSessionTradeLimit;
         lastTradeDate = preservedLastTradeDate;
-        sessionHalted = preservedSessionHalted;
-        sessionTradeCount = preservedSessionTradeCount;
-        totalProfit = preservedTotalProfit;
-        capital = preservedCapital;
-        initialCapital = preservedInitialCapital;
-        currentTradeCost = preservedCurrentTradeCost;
-        consecutiveLosses = preservedConsecutiveLosses;
-        lastTradeResult = preservedLastTradeResult;
         
-        // Reset form inputs to defaults but preserve session progress
-        document.getElementById('capital').value = initialCapital || 1000;
-        document.getElementById('profit').value = targetProfit || 10;
-        document.getElementById('payout').value = payout || 75;
-        document.getElementById('winrate').value = winRate || 55;
-        document.getElementById('maxDailyLossPercent').value = maxDailyLossPercent || 5;
-        document.getElementById('maxDrawdownValue').value = maxDrawdownValue || 50;
+        // Reset form inputs to defaults but preserve session structure
+        document.getElementById('capital').value = initialCapitalFromForm;
+        document.getElementById('profit').value = targetProfitFromForm;
+        document.getElementById('payout').value = payoutFromForm;
+        document.getElementById('winrate').value = winRateFromForm;
+        document.getElementById('maxDailyLossPercent').value = maxDailyLossPercentFromForm;
+        document.getElementById('maxDrawdownValue').value = maxDrawdownValueFromForm;
         document.getElementById('strategyTag').value = 'Trend-Following';
         document.getElementById('marketPairSelect').value = 'EUR/USD';
         document.getElementById('emotion').value = 'Neutral';
         document.getElementById('startManualTrade').value = '';
         document.getElementById('useManualStart').checked = false;
         
+        // Reset manual mode
+        manualOverride = false;
+        manualBase = 0;
+        
         updateSuggestedBox();
         updateSessionStatus();
         updateRiskStatus();
         updateTradeHistoryTable();
         
-        // Maintain current session state
-        if (sessionHalted) {
-            setControlsEnabled(false);
-            startBtn.disabled = false;
-            resetSessionBtn.style.display = 'none';
-        } else {
-            setControlsEnabled(true);
-            startBtn.disabled = true;
-            resetSessionBtn.style.display = 'block';
+        // Reset session state properly
+        setControlsEnabled(false);
+        startBtn.disabled = false;
+        resetSessionBtn.style.display = 'none';
+        
+        // Clear any session timers
+        if (sessionTimerIntervalId) {
+            clearInterval(sessionTimerIntervalId);
+            sessionTimerIntervalId = null;
+        }
+        if (sessionLockIntervalId) {
+            clearInterval(sessionLockIntervalId);
+            sessionLockIntervalId = null;
         }
         
         saveState();
         
-        flashInfo("Trade history and analysis data cleared. Session progress preserved.");
+        flashInfo("All data reset completely. Fresh session ready with initial capital from form.");
     }
 
     function updateSessionStatus() {
@@ -2004,10 +2105,21 @@ input[type="text"]:focus, input[type="number"]:focus, select:focus {
         
         marketPairSelect.addEventListener('change', toggleMarketPairInput);
         
-        // Form updates
+        // Form updates - FIXED: Capital input now updates current capital and visual display
         const formInputs = ['capital', 'profit', 'payout', 'winrate', 'maxDailyLossPercent', 'maxDrawdownValue'];
         formInputs.forEach(id => {
             document.getElementById(id).addEventListener('input', function() {
+                if (id === 'capital') {
+                    // Update both initial capital and current capital when capital input changes
+                    const newCapital = parseFloat(this.value) || 0;
+                    initialCapital = newCapital;
+                    if (sessionHalted) {
+                        // Only update current capital if session is halted (not active)
+                        capital = newCapital;
+                    }
+                    // Always update the visual display
+                    updateSessionStatus();
+                }
                 baseSuggestedCost = updateSuggestedBox();
                 if (!manualOverride) {
                     calculateNextTradeCost(lastTradeResult);
